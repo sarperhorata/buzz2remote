@@ -1,25 +1,16 @@
-import { neonConfig } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-
-// WebSocket support for Node.js environments
-if (typeof globalThis.WebSocket === "undefined") {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    neonConfig.webSocketConstructor = require("ws");
-  } catch {
-    // ws not available
-  }
-}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
-  // In Prisma v7, PrismaNeon expects a Pool config object (not a Pool instance).
-  // It internally creates the Pool via new neon.Pool(config).
-  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+  const connectionString = process.env.DATABASE_URL!;
+  const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
+  // @ts-expect-error - adapter type in Prisma v7
+  const adapter = new PrismaPg(pool);
   // @ts-expect-error - adapter type in Prisma v7
   return new PrismaClient({ adapter });
 }
