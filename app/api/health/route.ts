@@ -9,9 +9,9 @@ export async function GET() {
       database: "connected",
       timestamp: new Date().toISOString(),
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { status: "error", database: "disconnected" },
+      { status: "error", database: "disconnected", detail: String(error) },
       { status: 503 }
     );
   }
