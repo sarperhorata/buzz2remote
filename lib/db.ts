@@ -1,4 +1,3 @@
-import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
@@ -7,10 +6,8 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL!;
-  const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
-  // @ts-expect-error - adapter type in Prisma v7
-  const adapter = new PrismaPg(pool);
+  // Pass connection string directly - PrismaPg v7 accepts string, Pool, or config
+  const adapter = new PrismaPg(process.env.DATABASE_URL!);
   // @ts-expect-error - adapter type in Prisma v7
   return new PrismaClient({ adapter });
 }
