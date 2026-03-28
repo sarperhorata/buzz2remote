@@ -1,4 +1,4 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 
@@ -17,13 +17,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const dbUrl = process.env.DATABASE_URL;
-  const poolConfig = Object.create(null);
-  poolConfig.connectionString = dbUrl;
-  const pool = new Pool(poolConfig);
-  // @ts-expect-error - Pool type mismatch between package versions
-  const adapter = new PrismaNeon(pool);
-  // @ts-expect-error - adapter type mismatch in Prisma v7
+  // In Prisma v7, PrismaNeon expects a Pool config object (not a Pool instance).
+  // It internally creates the Pool via new neon.Pool(config).
+  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+  // @ts-expect-error - adapter type in Prisma v7
   return new PrismaClient({ adapter });
 }
 
