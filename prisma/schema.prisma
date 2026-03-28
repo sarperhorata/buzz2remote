@@ -1,0 +1,298 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model activity_summaries {
+  user_id    String?  @db.Uuid
+  period     String   @db.VarChar(50)
+  stats      Json?
+  id         String   @id @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([user_id], map: "ix_activity_summaries_user_id")
+}
+
+model ads {
+  title       String   @db.VarChar(500)
+  company     String?  @db.VarChar(255)
+  description String?
+  location    String?  @db.VarChar(500)
+  apply_url   String?  @db.VarChar(1024)
+  is_active   Boolean
+  id          String   @id @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([company], map: "ix_ads_company")
+  @@index([title], map: "ix_ads_title")
+}
+
+model companies {
+  name          String                   @unique(map: "ix_companies_name") @db.VarChar(255)
+  description   String?
+  website       String?                  @db.VarChar(1024)
+  career_page   String?                  @db.VarChar(1024)
+  logo_url      String?                  @db.VarChar(1024)
+  location      String?                  @db.VarChar(500)
+  industry      String?                  @db.VarChar(255)
+  size          String?                  @db.VarChar(50)
+  founded       Int?
+  is_active     Boolean
+  benefits      Json?
+  tech_stack    Json?
+  social_links  Json?
+  remote_policy String?                  @db.VarChar(255)
+  search_vector Unsupported("tsvector")?
+  id            String                   @id @db.Uuid
+  created_at    DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime                 @default(now()) @db.Timestamptz(6)
+
+  @@index([industry], map: "ix_companies_industry")
+  @@index([location], map: "ix_companies_location")
+  @@index([search_vector], map: "ix_companies_search_vector", type: Gin)
+  @@index([size], map: "ix_companies_size")
+  @@index([website], map: "ix_companies_website")
+}
+
+model fake_job_analyses {
+  job_id     String   @db.Uuid
+  analysis   Json?
+  is_fake    Boolean?
+  confidence Float?
+  id         String   @id @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  jobs       jobs     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([job_id], map: "ix_fake_job_analyses_job_id")
+}
+
+model job_interactions {
+  job_id           String   @db.Uuid
+  user_id          String?  @db.Uuid
+  interaction_type String   @db.VarChar(50)
+  session_id       String?  @db.VarChar(255)
+  ip_address       String?  @db.VarChar(45)
+  timestamp        DateTime @default(now()) @db.Timestamptz(6)
+  id               String   @id @db.Uuid
+  jobs             jobs     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([job_id], map: "ix_job_interactions_job_id")
+  @@index([user_id], map: "ix_job_interactions_user_id")
+}
+
+model jobs {
+  title                String                   @db.VarChar(500)
+  company              String                   @db.VarChar(255)
+  location             String?                  @db.VarChar(500)
+  description          String?
+  requirements         String?
+  benefits             String?
+  salary               String?                  @db.VarChar(255)
+  salary_min           Int?
+  salary_max           Int?
+  salary_currency      String?                  @db.VarChar(10)
+  salary_range         String?                  @db.VarChar(255)
+  job_type             String?                  @db.VarChar(50)
+  experience_level     String?                  @db.VarChar(50)
+  remote_type          String?                  @db.VarChar(50)
+  work_type            String?                  @db.VarChar(50)
+  seniority_level      String?                  @db.VarChar(50)
+  skills               Json?
+  tags                 Json?
+  apply_url            String?                  @db.VarChar(1024)
+  source               String?                  @db.VarChar(100)
+  source_url           String?                  @db.VarChar(1024)
+  source_type          String?                  @db.VarChar(100)
+  external_id          String?                  @db.VarChar(255)
+  is_active            Boolean
+  is_remote            Boolean?
+  archived             Boolean
+  is_translated        Boolean
+  original_language    String?                  @db.VarChar(10)
+  original_data        Json?
+  translation_metadata Json?
+  views_count          Int
+  applications_count   Int
+  applicant_count      Int?
+  posted_date          DateTime?                @db.Timestamptz(6)
+  last_updated         DateTime?                @db.Timestamptz(6)
+  search_vector        Unsupported("tsvector")?
+  id                   String                   @id @db.Uuid
+  created_at           DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime                 @default(now()) @db.Timestamptz(6)
+  fake_job_analyses    fake_job_analyses[]
+  job_interactions     job_interactions[]
+  scraped_forms        scraped_forms[]
+  user_applications    user_applications[]
+
+  @@unique([source, external_id], map: "ix_jobs_source_external_id", where: raw("((source IS NOT NULL) AND (external_id IS NOT NULL))"))
+  @@index([company], map: "ix_jobs_company")
+  @@index([is_active], map: "ix_jobs_is_active")
+  @@index([job_type], map: "ix_jobs_job_type")
+  @@index([location], map: "ix_jobs_location")
+  @@index([posted_date], map: "ix_jobs_posted_date")
+  @@index([search_vector], map: "ix_jobs_search_vector", type: Gin)
+  @@index([skills], map: "ix_jobs_skills", type: Gin)
+  @@index([title], map: "ix_jobs_title")
+}
+
+model notification_settings {
+  user_id     String   @unique @db.Uuid
+  preferences Json?
+  id          String   @id @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+  users       users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model performance_metrics {
+  endpoint         String   @db.VarChar(500)
+  method           String   @db.VarChar(10)
+  response_time_ms Float
+  status_code      Int
+  timestamp        DateTime @default(now()) @db.Timestamptz(6)
+  id               String   @id @db.Uuid
+
+  @@index([endpoint], map: "ix_performance_metrics_endpoint")
+  @@index([timestamp], map: "ix_performance_metrics_timestamp")
+}
+
+model scraped_forms {
+  job_id     String   @db.Uuid
+  form_data  Json?
+  form_html  String?
+  id         String   @id @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  jobs       jobs     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([job_id], map: "ix_scraped_forms_job_id")
+}
+
+model user_activities {
+  user_id       String?  @db.Uuid
+  activity_type String   @db.VarChar(100)
+  details       Json?
+  ip_address    String?  @db.VarChar(45)
+  user_agent    String?
+  timestamp     DateTime @default(now()) @db.Timestamptz(6)
+  id            String   @id @db.Uuid
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([activity_type], map: "ix_user_activities_activity_type")
+  @@index([timestamp], map: "ix_user_activities_timestamp")
+  @@index([user_id], map: "ix_user_activities_user_id")
+}
+
+model user_applications {
+  user_id               String    @db.Uuid
+  job_id                String    @db.Uuid
+  status                String    @db.VarChar(50)
+  application_type      String?   @db.VarChar(50)
+  cover_letter          String?
+  resume_url            String?   @db.VarChar(1024)
+  additional_notes      String?
+  form_data             Json?
+  external_url          String?   @db.VarChar(1024)
+  external_reference    String?   @db.VarChar(255)
+  viewed_by_company     Boolean
+  company_response      String?
+  company_response_date DateTime? @db.Timestamptz(6)
+  applied_at            DateTime  @default(now()) @db.Timestamptz(6)
+  id                    String    @id @db.Uuid
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @db.Timestamptz(6)
+  jobs                  jobs      @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, job_id], map: "uq_user_job_application")
+  @@index([applied_at], map: "ix_user_applications_applied_at")
+  @@index([job_id], map: "ix_user_applications_job_id")
+  @@index([user_id], map: "ix_user_applications_user_id")
+}
+
+model user_notifications {
+  user_id           String    @db.Uuid
+  title             String    @db.VarChar(500)
+  message           String?
+  notification_type String    @db.VarChar(50)
+  category          String    @db.VarChar(50)
+  is_read           Boolean
+  is_active         Boolean
+  action_url        String?   @db.VarChar(1024)
+  action_text       String?   @db.VarChar(255)
+  metadata          Json?
+  read_at           DateTime? @db.Timestamptz(6)
+  id                String    @id @db.Uuid
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+  users             users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([user_id], map: "ix_user_notifications_user_id")
+}
+
+model user_sessions {
+  user_id      String?   @db.Uuid
+  session_data Json?
+  started_at   DateTime  @default(now()) @db.Timestamptz(6)
+  ended_at     DateTime? @db.Timestamptz(6)
+  is_active    Boolean
+  id           String    @id @db.Uuid
+  users        users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([user_id], map: "ix_user_sessions_user_id")
+}
+
+model users {
+  email                  String                 @unique(map: "ix_users_email") @db.VarChar(255)
+  full_name              String?                @db.VarChar(255)
+  username               String?                @unique(map: "ix_users_username") @db.VarChar(255)
+  hashed_password        String?                @db.VarChar(255)
+  is_active              Boolean
+  is_superuser           Boolean
+  email_verified         Boolean
+  auth_provider          String?                @db.VarChar(50)
+  google_id              String?                @db.VarChar(255)
+  linkedin_id            String?                @db.VarChar(255)
+  linkedin_access_token  String?
+  profile_picture_url    String?                @db.VarChar(1024)
+  resume_url             String?                @db.VarChar(1024)
+  bio                    String?
+  company                String?                @db.VarChar(255)
+  position               String?                @db.VarChar(255)
+  location               String?                @db.VarChar(500)
+  profile                Json?
+  work_experience        Json?
+  education              Json?
+  skills                 Json?
+  certificates           Json?
+  social_links           Json?
+  onboarding_completed   Boolean
+  onboarding_step        Int
+  stripe_customer_id     String?                @db.VarChar(255)
+  stripe_subscription_id String?                @db.VarChar(255)
+  subscription_status    String?                @db.VarChar(50)
+  subscription_plan      String?                @db.VarChar(50)
+  subscription_end_date  DateTime?              @db.Timestamptz(6)
+  telegram_user_id       BigInt?
+  telegram_username      String?                @db.VarChar(255)
+  id                     String                 @id @db.Uuid
+  created_at             DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime               @default(now()) @db.Timestamptz(6)
+  activity_summaries     activity_summaries[]
+  job_interactions       job_interactions[]
+  notification_settings  notification_settings?
+  user_activities        user_activities[]
+  user_applications      user_applications[]
+  user_notifications     user_notifications[]
+  user_sessions          user_sessions[]
+}
