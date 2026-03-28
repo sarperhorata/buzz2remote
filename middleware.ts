@@ -1,43 +1,44 @@
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const { pathname } = req.nextUrl;
+const protectedPaths = [
+  "/dashboard",
+  "/profile",
+  "/applications",
+  "/favorites",
+  "/settings",
+  "/resume-upload",
+  "/notifications",
+];
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Check JWT token (lightweight, no Prisma import)
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const isLoggedIn = !!token;
 
   // Protected routes
-  const protectedPaths = [
-    "/dashboard",
-    "/profile",
-    "/applications",
-    "/favorites",
-    "/settings",
-    "/resume-upload",
-    "/notifications",
-  ];
-
-  const isProtected = protectedPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   if (isProtected && !isLoggedIn) {
-    const loginUrl = new URL("/login", req.nextUrl.origin);
+    const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return Response.redirect(loginUrl);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Admin routes
   if (pathname.startsWith("/admin")) {
     if (!isLoggedIn) {
-      return Response.redirect(new URL("/login", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-    const isAdmin = req.auth?.user?.isAdmin;
-    if (!isAdmin) {
-      return Response.redirect(new URL("/", req.nextUrl.origin));
+    if (!token?.isAdmin) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  return undefined;
-});
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
