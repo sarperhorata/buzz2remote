@@ -17,9 +17,11 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL!;
-  const pool = new Pool({ connectionString });
-  // @ts-expect-error - Pool type mismatch between @neondatabase/serverless versions
+  const dbUrl = process.env.DATABASE_URL;
+  const poolConfig = Object.create(null);
+  poolConfig.connectionString = dbUrl;
+  const pool = new Pool(poolConfig);
+  // @ts-expect-error - Pool type mismatch between package versions
   const adapter = new PrismaNeon(pool);
   // @ts-expect-error - adapter type mismatch in Prisma v7
   return new PrismaClient({ adapter });
