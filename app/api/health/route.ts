@@ -11,7 +11,7 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      { status: "error", database: "disconnected", detail: String(error) },
+      { status: "error", database: "disconnected", detail: String(error), hasDbUrl: !!process.env.DATABASE_URL, dbUrlPrefix: process.env.DATABASE_URL?.slice(0, 15) },
       { status: 503 }
     );
   }
