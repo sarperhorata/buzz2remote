@@ -33,7 +33,7 @@ export function JobDetailModal({ jobId, open, onClose }: JobDetailModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto p-0">
         {isLoading ? (
           <div className="p-6 space-y-4">
             <Skeleton className="h-8 w-3/4" />

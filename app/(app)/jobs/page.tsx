@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { JobDetailModal } from "@/components/ui/job-detail-modal";
 import {
   Search, MapPin, Building2, Clock, DollarSign,
-  ChevronLeft, ChevronRight, Briefcase, LayoutGrid, LayoutList, X, Filter,
+  ChevronLeft, ChevronRight, Briefcase, LayoutGrid, LayoutList,
+  X, Filter, ChevronDown, SlidersHorizontal, Calendar,
 } from "lucide-react";
 
 interface Job {
@@ -32,17 +33,22 @@ interface Job {
   posted_date: string | null;
 }
 
-const JOB_TYPE_OPTIONS = [
-  { value: "Full-time", label: "Full-time" },
-  { value: "Part-Time", label: "Part-time" },
-  { value: "Contract", label: "Contract" },
-  { value: "Freelance", label: "Freelance" },
+const JOB_TYPE_OPTIONS = ["Full-time", "Part-Time", "Contract", "Freelance"];
+const REMOTE_TYPE_OPTIONS = ["Remote", "Hybrid", "On-site"];
+const SALARY_RANGES = [
+  { label: "Any Salary", min: 0, max: 0 },
+  { label: "$30k+", min: 30000, max: 0 },
+  { label: "$50k+", min: 50000, max: 0 },
+  { label: "$80k+", min: 80000, max: 0 },
+  { label: "$100k+", min: 100000, max: 0 },
+  { label: "$150k+", min: 150000, max: 0 },
 ];
-
-const REMOTE_TYPE_OPTIONS = [
-  { value: "Remote", label: "Remote" },
-  { value: "Hybrid", label: "Hybrid" },
-  { value: "On-site", label: "On-site" },
+const DATE_POSTED_OPTIONS = [
+  { label: "Any Time", days: 0 },
+  { label: "Today", days: 1 },
+  { label: "Last 3 Days", days: 3 },
+  { label: "Last Week", days: 7 },
+  { label: "Last Month", days: 30 },
 ];
 
 async function fetchJobs(params: Record<string, string>) {
@@ -104,40 +110,200 @@ function CompanyLogo({ company, size = 40 }: { company: string; size?: number })
   );
 }
 
+/* Multi-select dropdown component */
+function MultiSelectDropdown({
+  label,
+  icon: Icon,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  icon: typeof Filter;
+  options: string[];
+  selected: string[];
+  onChange: (v: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function toggle(val: string) {
+    onChange(selected.includes(val) ? selected.filter((v) => v !== val) : [...selected, val]);
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+          selected.length > 0
+            ? "border-primary/30 bg-primary/5 text-primary"
+            : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-3.5" />
+        {label}
+        {selected.length > 0 && (
+          <span className="gradient-primary text-stone-900 text-[10px] font-bold rounded-full size-4 flex items-center justify-center ml-0.5">
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full mt-1 left-0 z-50 bg-popover border rounded-xl shadow-xl p-1.5 min-w-[180px] animate-slide-down">
+          {options.map((opt) => (
+            <label
+              key={opt}
+              className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-muted transition-colors cursor-pointer text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggle(opt)}
+                className="rounded border-border accent-primary size-3.5"
+              />
+              {opt}
+            </label>
+          ))}
+          {selected.length > 0 && (
+            <button
+              onClick={() => onChange([])}
+              className="w-full text-xs text-destructive hover:bg-destructive/10 rounded-lg py-1.5 mt-1 transition-colors"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Single select dropdown */
+function SingleSelectDropdown({
+  label,
+  icon: Icon,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  icon: typeof Filter;
+  options: { label: string; value: string }[];
+  selected: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selectedLabel = options.find((o) => o.value === selected)?.label || label;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+          selected
+            ? "border-primary/30 bg-primary/5 text-primary"
+            : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-3.5" />
+        {selected ? selectedLabel : label}
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full mt-1 left-0 z-50 bg-popover border rounded-xl shadow-xl p-1.5 min-w-[160px] animate-slide-down">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { onChange(opt.value === selected ? "" : opt.value); setOpen(false); }}
+              className={`w-full text-left px-2.5 py-2 rounded-lg text-sm transition-colors ${
+                opt.value === selected ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
-  const [jobType, setJobType] = useState("");
-  const [remoteType, setRemoteType] = useState("");
+  const [jobTypes, setJobTypes] = useState<string[]>([]);
+  const [remoteTypes, setRemoteTypes] = useState<string[]>([]);
+  const [salaryMin, setSalaryMin] = useState("");
+  const [datePosted, setDatePosted] = useState("");
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  const activeFilters = [jobType, remoteType].filter(Boolean).length;
+  const activeFilters = jobTypes.length + remoteTypes.length + (salaryMin ? 1 : 0) + (datePosted ? 1 : 0);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["jobs", search, location, jobType, remoteType, page],
-    queryFn: () =>
-      fetchJobs({
-        ...(search && { q: search }),
-        ...(location && { location }),
-        ...(jobType && { job_type: jobType }),
-        ...(remoteType && { remote_type: remoteType }),
+    queryKey: ["jobs", search, location, jobTypes, remoteTypes, salaryMin, datePosted, page],
+    queryFn: () => {
+      const params: Record<string, string> = {
         page: page.toString(),
         limit: "20",
-      }),
+      };
+      if (search) params.q = search;
+      if (location) params.location = location;
+      if (jobTypes.length === 1) params.job_type = jobTypes[0];
+      if (remoteTypes.length === 1) params.remote_type = remoteTypes[0];
+      if (salaryMin) params.salary_min = salaryMin;
+      return fetchJobs(params);
+    },
   });
 
+  // Client-side filter for multi-select (API only supports single values)
+  const filteredJobs = data?.jobs?.filter((job: Job) => {
+    if (jobTypes.length > 1 && job.job_type && !jobTypes.some(t =>
+      job.job_type!.toLowerCase().includes(t.toLowerCase())
+    )) return false;
+    if (remoteTypes.length > 1 && job.remote_type && !remoteTypes.includes(job.remote_type)) return false;
+    if (datePosted && job.posted_date) {
+      const days = parseInt(datePosted);
+      if (days > 0) {
+        const diff = Date.now() - new Date(job.posted_date).getTime();
+        if (diff > days * 24 * 60 * 60 * 1000) return false;
+      }
+    }
+    return true;
+  }) ?? data?.jobs;
+
   function clearFilters() {
-    setJobType("");
-    setRemoteType("");
+    setJobTypes([]);
+    setRemoteTypes([]);
+    setSalaryMin("");
+    setDatePosted("");
     setPage(1);
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader title="Remote Jobs" description={data?.total ? `${data.total} jobs found` : "Find your next remote opportunity"}>
-        {/* View toggle */}
         <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
             onClick={() => setViewMode("list")}
@@ -178,55 +344,85 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Advanced Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
-          <Filter className="size-3.5" />
-          <span>Filters:</span>
+          <SlidersHorizontal className="size-3.5" />
+          <span className="hidden sm:inline">Filters:</span>
         </div>
 
-        {/* Job Type Pills */}
-        {JOB_TYPE_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => { setJobType(jobType === opt.value ? "" : opt.value); setPage(1); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-              jobType === opt.value
-                ? "gradient-primary text-stone-900 shadow-md"
-                : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+        <MultiSelectDropdown
+          label="Job Type"
+          icon={Briefcase}
+          options={JOB_TYPE_OPTIONS}
+          selected={jobTypes}
+          onChange={(v) => { setJobTypes(v); setPage(1); }}
+        />
 
-        <div className="w-px h-5 bg-border mx-1" />
+        <MultiSelectDropdown
+          label="Work Mode"
+          icon={MapPin}
+          options={REMOTE_TYPE_OPTIONS}
+          selected={remoteTypes}
+          onChange={(v) => { setRemoteTypes(v); setPage(1); }}
+        />
 
-        {/* Remote Type Pills */}
-        {REMOTE_TYPE_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => { setRemoteType(remoteType === opt.value ? "" : opt.value); setPage(1); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-              remoteType === opt.value
-                ? "gradient-primary text-stone-900 shadow-md"
-                : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+        <SingleSelectDropdown
+          label="Salary"
+          icon={DollarSign}
+          options={SALARY_RANGES.map((r) => ({ label: r.label, value: r.min ? r.min.toString() : "" }))}
+          selected={salaryMin}
+          onChange={(v) => { setSalaryMin(v); setPage(1); }}
+        />
+
+        <SingleSelectDropdown
+          label="Date Posted"
+          icon={Calendar}
+          options={DATE_POSTED_OPTIONS.map((d) => ({ label: d.label, value: d.days ? d.days.toString() : "" }))}
+          selected={datePosted}
+          onChange={(v) => { setDatePosted(v); setPage(1); }}
+        />
 
         {activeFilters > 0 && (
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1 px-2 py-1 rounded-full text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
           >
             <X className="size-3" />
-            Clear
+            Clear All ({activeFilters})
           </button>
         )}
       </div>
+
+      {/* Active filter badges */}
+      {activeFilters > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {jobTypes.map((t) => (
+            <Badge key={t} variant="secondary" className="gap-1 text-xs pr-1">
+              {t}
+              <button onClick={() => setJobTypes(jobTypes.filter((v) => v !== t))} className="ml-0.5 hover:text-destructive"><X className="size-3" /></button>
+            </Badge>
+          ))}
+          {remoteTypes.map((t) => (
+            <Badge key={t} className="gap-1 text-xs bg-primary/10 text-primary border-primary/20 pr-1">
+              {t}
+              <button onClick={() => setRemoteTypes(remoteTypes.filter((v) => v !== t))} className="ml-0.5 hover:text-destructive"><X className="size-3" /></button>
+            </Badge>
+          ))}
+          {salaryMin && (
+            <Badge variant="outline" className="gap-1 text-xs pr-1">
+              ${parseInt(salaryMin).toLocaleString()}+
+              <button onClick={() => setSalaryMin("")} className="ml-0.5 hover:text-destructive"><X className="size-3" /></button>
+            </Badge>
+          )}
+          {datePosted && (
+            <Badge variant="outline" className="gap-1 text-xs pr-1">
+              Last {datePosted}d
+              <button onClick={() => setDatePosted("")} className="ml-0.5 hover:text-destructive"><X className="size-3" /></button>
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Results */}
       {isLoading ? (
@@ -235,7 +431,7 @@ export default function JobsPage() {
             <Skeleton key={i} className={viewMode === "grid" ? "h-48 rounded-xl" : "h-28 rounded-xl"} />
           ))}
         </div>
-      ) : data?.jobs?.length === 0 ? (
+      ) : !filteredJobs?.length ? (
         <EmptyState
           icon={Briefcase}
           title="No jobs found"
@@ -246,7 +442,7 @@ export default function JobsPage() {
           {/* LIST VIEW */}
           {viewMode === "list" ? (
             <div className="space-y-3">
-              {data?.jobs?.map((job: Job) => (
+              {filteredJobs.map((job: Job) => (
                 <button
                   key={job.id}
                   onClick={() => setSelectedJobId(job.id)}
@@ -260,9 +456,7 @@ export default function JobsPage() {
                           <h2 className="text-lg font-semibold group-hover:text-primary transition-colors truncate">
                             {job.title}
                           </h2>
-                          <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                            <span className="text-sm">{job.company}</span>
-                          </div>
+                          <span className="text-sm text-muted-foreground">{job.company}</span>
                           <div className="flex flex-wrap items-center gap-3 mt-2">
                             {job.location && (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -298,8 +492,8 @@ export default function JobsPage() {
             </div>
           ) : (
             /* GRID VIEW */
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {data?.jobs?.map((job: Job) => (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredJobs.map((job: Job) => (
                 <button
                   key={job.id}
                   onClick={() => setSelectedJobId(job.id)}
@@ -344,26 +538,14 @@ export default function JobsPage() {
           {/* Pagination */}
           {data?.totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-8">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="size-4 mr-1" />
-                Previous
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                <ChevronLeft className="size-4 mr-1" /> Previous
               </Button>
               <span className="px-3 py-1 text-sm text-muted-foreground">
                 Page {page} of {data.totalPages}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                disabled={page === data.totalPages}
-              >
-                Next
-                <ChevronRight className="size-4 ml-1" />
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}>
+                Next <ChevronRight className="size-4 ml-1" />
               </Button>
             </div>
           )}
