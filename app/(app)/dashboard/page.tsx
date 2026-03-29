@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { StatCard } from "@/components/ui/stat-card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FileText, Bell, Crown, Search, Heart, User, Briefcase, ArrowRight } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const [apps, notifications] = await Promise.all([
@@ -18,48 +22,71 @@ export default function DashboardPage() {
     },
   });
 
+  const quickActions = [
+    { href: "/jobs", label: "Browse Jobs", icon: Search, gradient: "from-amber-500 to-yellow-400" },
+    { href: "/applications", label: "My Applications", icon: FileText, gradient: "from-amber-600 to-orange-500" },
+    { href: "/favorites", label: "Saved Jobs", icon: Heart, gradient: "from-yellow-500 to-amber-400" },
+    { href: "/profile", label: "Edit Profile", icon: User, gradient: "from-orange-500 to-amber-500" },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-        Welcome back, {session?.user?.name || "User"}
-      </h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-8">Here&apos;s an overview of your activity.</p>
+      {/* Welcome */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Welcome back, <span className="gradient-text">{session?.user?.name || "User"}</span>
+        </h1>
+        <p className="text-muted-foreground mt-1">Here&apos;s an overview of your activity.</p>
+      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Applications</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats?.applications || 0}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Unread Notifications</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats?.unreadNotifications || 0}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Subscription</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1 capitalize">
-            {String((session?.user as Record<string, unknown>)?.subscriptionPlan || "Free")}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        {isLoading ? (
+          <>
+            <Skeleton className="h-28 rounded-xl" />
+            <Skeleton className="h-28 rounded-xl" />
+            <Skeleton className="h-28 rounded-xl" />
+          </>
+        ) : (
+          <>
+            <StatCard label="Applications" value={stats?.applications || 0} icon={FileText} />
+            <StatCard label="Unread Notifications" value={stats?.unreadNotifications || 0} icon={Bell} />
+            <StatCard
+              label="Subscription"
+              value={String((session?.user as Record<string, unknown>)?.subscriptionPlan || "Free")}
+              icon={Crown}
+            />
+          </>
+        )}
       </div>
 
       {/* Quick Actions */}
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Quick Actions</h2>
+      <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { href: "/jobs", label: "Browse Jobs", color: "bg-blue-600" },
-          { href: "/applications", label: "My Applications", color: "bg-green-600" },
-          { href: "/favorites", label: "Saved Jobs", color: "bg-purple-600" },
-          { href: "/profile", label: "Edit Profile", color: "bg-orange-600" },
-        ].map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            className={`${action.color} text-white rounded-xl p-4 text-center font-medium hover:opacity-90 transition`}
-          >
-            {action.label}
+        {quickActions.map((action) => (
+          <Link key={action.href} href={action.href} className="group">
+            <div className="glass-card p-5 hover-lift text-center">
+              <div className={`w-12 h-12 mx-auto bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <action.icon className="size-5 text-white" />
+              </div>
+              <p className="font-medium text-sm">{action.label}</p>
+            </div>
           </Link>
         ))}
+      </div>
+
+      {/* CTA */}
+      <div className="mt-10 glass-card p-6 flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold">Discover new opportunities</h3>
+          <p className="text-sm text-muted-foreground">Browse thousands of remote jobs from top companies.</p>
+        </div>
+        <Button asChild className="gradient-primary text-white border-0 shadow-lg">
+          <Link href="/jobs">
+            Browse Jobs
+            <ArrowRight className="size-4 ml-1.5" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

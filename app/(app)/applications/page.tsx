@@ -2,6 +2,18 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { FileText, Building2, CheckCircle, XCircle, Clock } from "lucide-react";
+
+const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof CheckCircle; label: string }> = {
+  accepted: { variant: "default", icon: CheckCircle, label: "Accepted" },
+  rejected: { variant: "destructive", icon: XCircle, label: "Rejected" },
+  applied: { variant: "secondary", icon: Clock, label: "Applied" },
+  pending: { variant: "secondary", icon: Clock, label: "Pending" },
+};
 
 export default function ApplicationsPage() {
   const { data, isLoading } = useQuery({
@@ -11,37 +23,48 @@ export default function ApplicationsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">My Applications</h1>
+      <PageHeader title="My Applications" description="Track your job application status" />
 
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
-      ) : data?.applications?.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No applications yet.</p>
-          <Link href="/jobs" className="text-blue-600 hover:underline">Browse jobs</Link>
-        </div>
-      ) : (
         <div className="space-y-4">
-          {data?.applications?.map((app: { id: string; status: string; applied_at: string; jobs: { id: string; title: string; company: string; location: string | null } }) => (
-            <div key={app.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Link href={`/jobs/${app.jobs.id}`} className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600">
-                    {app.jobs.title}
-                  </Link>
-                  <p className="text-gray-600 dark:text-gray-400">{app.jobs.company}</p>
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+      ) : data?.applications?.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="No applications yet"
+          description="Start applying to remote jobs and track your progress here."
+          actionLabel="Browse Jobs"
+          actionHref="/jobs"
+        />
+      ) : (
+        <div className="space-y-3">
+          {data?.applications?.map((app: { id: string; status: string; applied_at: string; jobs: { id: string; title: string; company: string; location: string | null } }) => {
+            const status = statusConfig[app.status] || statusConfig.pending;
+            const StatusIcon = status.icon;
+            return (
+              <div key={app.id} className="glass-card p-5 hover-lift">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/jobs/${app.jobs.id}`} className="text-lg font-semibold hover:text-primary transition-colors truncate block">
+                      {app.jobs.title}
+                    </Link>
+                    <div className="flex items-center gap-1.5 text-muted-foreground mt-1">
+                      <Building2 className="size-4 shrink-0" />
+                      <span className="text-sm">{app.jobs.company}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Applied {new Date(app.applied_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge variant={status.variant} className="gap-1 shrink-0">
+                    <StatusIcon className="size-3" />
+                    {status.label}
+                  </Badge>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  app.status === "accepted" ? "bg-green-100 text-green-700" :
-                  app.status === "rejected" ? "bg-red-100 text-red-700" :
-                  "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {app.status}
-                </span>
               </div>
-              <p className="text-sm text-gray-400 mt-2">Applied {new Date(app.applied_at).toLocaleDateString()}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

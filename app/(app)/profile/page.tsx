@@ -2,6 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { Loader2, CheckCircle } from "lucide-react";
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
@@ -34,51 +41,74 @@ export default function ProfilePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-profile"] }),
   });
 
-  if (isLoading) return <div className="max-w-2xl mx-auto px-4 py-8"><p className="text-gray-500">Loading...</p></div>;
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <Skeleton className="h-10 w-48 mb-6" />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)}
+        </div>
+      </div>
+    );
+  }
+
+  const fields = [
+    { key: "full_name", label: "Full Name", type: "text" },
+    { key: "bio", label: "Bio", type: "textarea" },
+    { key: "location", label: "Location", type: "text" },
+    { key: "company", label: "Company", type: "text" },
+    { key: "position", label: "Position", type: "text" },
+  ] as const;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Profile</h1>
+      <PageHeader title="Profile" description="Manage your personal information" />
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }}
-        className="space-y-4"
-      >
-        {["full_name", "bio", "location", "company", "position"].map((field) => (
-          <div key={field}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 capitalize">
-              {field.replace("_", " ")}
-            </label>
-            {field === "bio" ? (
-              <textarea
-                value={form[field as keyof typeof form]}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                rows={3}
-              />
-            ) : (
-              <input
-                type="text"
-                value={form[field as keyof typeof form]}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-              />
+      <div className="glass-card p-6 md:p-8">
+        <form
+          onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }}
+          className="space-y-5"
+        >
+          {fields.map((field) => (
+            <div key={field.key} className="space-y-2">
+              <Label htmlFor={field.key}>{field.label}</Label>
+              {field.type === "textarea" ? (
+                <Textarea
+                  id={field.key}
+                  value={form[field.key]}
+                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                  rows={3}
+                />
+              ) : (
+                <Input
+                  id={field.key}
+                  type="text"
+                  value={form[field.key]}
+                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                />
+              )}
+            </div>
+          ))}
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all"
+            >
+              {mutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+              {mutation.isPending ? "Saving..." : "Save Profile"}
+            </Button>
+
+            {mutation.isSuccess && (
+              <span className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
+                <CheckCircle className="size-4" />
+                Profile updated!
+              </span>
             )}
           </div>
-        ))}
-
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
-        >
-          {mutation.isPending ? "Saving..." : "Save Profile"}
-        </button>
-
-        {mutation.isSuccess && (
-          <p className="text-green-600 text-sm">Profile updated successfully!</p>
-        )}
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

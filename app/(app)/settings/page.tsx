@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { User, CreditCard, AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -19,33 +22,47 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Settings</h1>
+      <PageHeader title="Settings" description="Manage your account and preferences" />
 
       {/* Account Info */}
-      <section className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Account</h2>
+      <section className="glass-card p-6 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="gradient-primary rounded-xl p-2.5 text-white shadow-lg">
+            <User className="size-5" />
+          </div>
+          <h2 className="text-lg font-semibold">Account</h2>
+        </div>
         <div className="space-y-2 text-sm">
-          <p><span className="text-gray-500">Email:</span> {session?.user?.email}</p>
-          <p><span className="text-gray-500">Name:</span> {session?.user?.name}</p>
-          <p><span className="text-gray-500">Role:</span> {session?.user?.isAdmin ? "Admin" : "User"}</p>
+          <p><span className="text-muted-foreground">Email:</span> {session?.user?.email}</p>
+          <p><span className="text-muted-foreground">Name:</span> {session?.user?.name}</p>
+          <p><span className="text-muted-foreground">Role:</span> {session?.user?.isAdmin ? "Admin" : "User"}</p>
         </div>
       </section>
 
       {/* Subscription */}
-      <section className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Subscription</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Current plan: <span className="font-medium capitalize">
+      <section className="glass-card p-6 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="gradient-primary rounded-xl p-2.5 text-white shadow-lg">
+            <CreditCard className="size-5" />
+          </div>
+          <h2 className="text-lg font-semibold">Subscription</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Current plan: <span className="font-semibold text-foreground capitalize">
             {String((session?.user as Record<string, unknown>)?.subscriptionPlan || "Free")}
           </span>
         </p>
-        <button
+        <Button
           onClick={handleManageBilling}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+          className="gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all"
         >
           Manage Billing
-        </button>
-        {message && <p className="text-sm text-amber-600 mt-2">{message}</p>}
+        </Button>
+        {message && (
+          <p className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 mt-3">
+            <AlertTriangle className="size-4" /> {message}
+          </p>
+        )}
       </section>
     </div>
   );

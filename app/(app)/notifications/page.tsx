@@ -1,6 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Bell, CheckCheck } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -33,39 +38,45 @@ export default function NotificationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+      <PageHeader title="Notifications" description="Stay updated on your applications">
         {data?.unreadCount > 0 && (
-          <button
-            onClick={() => markAllRead.mutate()}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Mark all as read
-          </button>
+          <Button variant="ghost" size="sm" onClick={() => markAllRead.mutate()}>
+            <CheckCheck className="size-4 mr-1.5" />
+            Mark all read
+          </Button>
         )}
-      </div>
+      </PageHeader>
 
       {isLoading ? (
-        <p className="text-gray-500">Loading...</p>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+        </div>
       ) : data?.notifications?.length === 0 ? (
-        <p className="text-center py-12 text-gray-500">No notifications yet.</p>
+        <EmptyState
+          icon={Bell}
+          title="No notifications"
+          description="You're all caught up! We'll notify you about important updates."
+        />
       ) : (
         <div className="space-y-3">
           {data?.notifications?.map((n: Notification) => (
             <div
               key={n.id}
               onClick={() => !n.is_read && markRead.mutate(n.id)}
-              className={`border rounded-lg p-4 cursor-pointer transition ${
-                n.is_read
-                  ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                  : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+              className={`glass-card p-4 cursor-pointer transition-all hover-lift ${
+                !n.is_read ? "border-l-4 border-l-primary" : ""
               }`}
             >
-              <div className="flex justify-between">
-                <h3 className="font-medium text-gray-900 dark:text-white">{n.title}</h3>
-                <span className="text-xs text-gray-400">{new Date(n.created_at).toLocaleDateString()}</span>
+              <div className="flex justify-between items-start">
+                <h3 className="font-medium">{n.title}</h3>
+                <span className="text-xs text-muted-foreground shrink-0 ml-4">
+                  {new Date(n.created_at).toLocaleDateString()}
+                </span>
               </div>
-              {n.message && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{n.message}</p>}
+              {n.message && <p className="text-sm text-muted-foreground mt-1">{n.message}</p>}
+              {!n.is_read && (
+                <div className="w-2 h-2 rounded-full bg-primary absolute top-4 right-4" />
+              )}
             </div>
           ))}
         </div>
