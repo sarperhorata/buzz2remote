@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export const metadata: Metadata = { title: "Pricing" };
 
@@ -11,7 +11,16 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "forever",
-    features: ["Browse all jobs", "10 applications/month", "Basic job alerts", "CV upload"],
+    features: [
+      { text: "Browse all jobs", included: true },
+      { text: "10 applications/month", included: true },
+      { text: "1 profile", included: true },
+      { text: "CV upload & parse", included: true },
+      { text: "Basic job alerts", included: true },
+      { text: "AI CV analysis", included: false },
+      { text: "Salary estimation", included: false },
+      { text: "AI cover letter", included: false },
+    ],
     cta: "Get Started",
     href: "/register",
     highlighted: false,
@@ -20,7 +29,16 @@ const plans = [
     name: "Pro",
     price: "$9",
     period: "/month",
-    features: ["Unlimited applications", "AI CV analysis", "Salary estimation", "Priority support", "Advanced filters", "Job match notifications"],
+    features: [
+      { text: "Unlimited applications", included: true },
+      { text: "3 profiles", included: true },
+      { text: "AI CV analysis", included: true },
+      { text: "Salary estimation", included: true },
+      { text: "AI cover letter", included: true },
+      { text: "Job match score", included: true },
+      { text: "Advanced filters", included: true },
+      { text: "Priority support", included: true },
+    ],
     cta: "Start Free Trial",
     href: "/register",
     highlighted: true,
@@ -29,7 +47,16 @@ const plans = [
     name: "Premium",
     price: "$19",
     period: "/month",
-    features: ["Everything in Pro", "Auto-apply", "Cover letter AI", "Dedicated account manager", "Early access to jobs", "Career coaching session"],
+    features: [
+      { text: "Everything in Pro", included: true },
+      { text: "Unlimited profiles", included: true },
+      { text: "Auto-apply", included: true },
+      { text: "LinkedIn import", included: true },
+      { text: "Early access to jobs", included: true },
+      { text: "Career coaching session", included: true },
+      { text: "Dedicated account manager", included: true },
+      { text: "Custom job alerts", included: true },
+    ],
     cta: "Contact Us",
     href: "/contact",
     highlighted: false,
@@ -72,9 +99,13 @@ export default function PricingPage() {
             </div>
             <ul className="space-y-3 mb-8">
               {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-2.5 text-sm">
-                  <Check className={`size-4 shrink-0 ${plan.highlighted ? "text-white" : "text-primary"}`} />
-                  {feature}
+                <li key={feature.text} className={`flex items-center gap-2.5 text-sm ${!feature.included && !plan.highlighted ? "text-muted-foreground" : ""}`}>
+                  {feature.included ? (
+                    <Check className={`size-4 shrink-0 ${plan.highlighted ? "text-white" : "text-primary"}`} />
+                  ) : (
+                    <X className="size-4 shrink-0 opacity-40" />
+                  )}
+                  {feature.text}
                 </li>
               ))}
             </ul>
@@ -83,7 +114,7 @@ export default function PricingPage() {
               className={`w-full h-11 font-semibold ${
                 plan.highlighted
                   ? "bg-white text-foreground hover:bg-white/90 shadow-lg"
-                  : "gradient-primary text-white border-0 shadow-lg hover:shadow-xl"
+                  : "gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl"
               }`}
             >
               <Link href={plan.href}>{plan.cta}</Link>

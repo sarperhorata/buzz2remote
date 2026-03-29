@@ -8,181 +8,194 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import {
-  Loader2, CheckCircle, Upload, FileText, Sparkles, Link2,
-  Briefcase, GraduationCap, MapPin, X, AlertCircle,
+  Loader2, CheckCircle, Upload, Sparkles, Link2, Plus,
+  Briefcase, GraduationCap, MapPin, X, AlertCircle, Star, Trash2, Crown,
 } from "lucide-react";
+import Link from "next/link";
+
+interface Profile {
+  id: string;
+  profile_name: string;
+  is_default: boolean;
+  title: string | null;
+  bio: string | null;
+  skills: { name: string }[] | null;
+  work_experience: unknown;
+  education: unknown;
+  certificates: unknown;
+  resume_url: string | null;
+  resume_text: string | null;
+}
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () => fetch("/api/users/me").then((r) => r.json()),
-  });
-
-  const [form, setForm] = useState({
-    full_name: "", bio: "", location: "", company: "", position: "",
-    skills: [] as string[],
-  });
-  const [cvParsing, setCvParsing] = useState(false);
-  const [cvResult, setCvResult] = useState<string | null>(null);
-  const [cvError, setCvError] = useState<string | null>(null);
-  const [linkedinImporting, setLinkedinImporting] = useState(false);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [form, setForm] = useState({ profile_name: "", title: "", bio: "", skills: [] as string[] });
   const [newSkill, setNewSkill] = useState("");
+  const [cvParsing, setCvParsing] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Fetch all profiles
+  const { data: profilesData, isLoading } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: () => fetch("/api/profiles").then((r) => r.json()),
+  });
+
+  const profiles: Profile[] = profilesData?.profiles || [];
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0] || null;
+
+  // Set initial active profile
   useEffect(() => {
-    if (user) {
+    if (profiles.length > 0 && !activeProfileId) {
+      setActiveProfileId(profiles[0].id);
+    }
+  }, [profiles, activeProfileId]);
+
+  // Sync form when active profile changes
+  useEffect(() => {
+    if (activeProfile) {
       setForm({
-        full_name: user.full_name || "",
-        bio: user.bio || "",
-        location: user.location || "",
-        company: user.company || "",
-        position: user.position || "",
-        skills: Array.isArray(user.skills) ? user.skills.map((s: { name?: string } | string) => typeof s === "string" ? s : s.name || "") : [],
+        profile_name: activeProfile.profile_name || "",
+        title: activeProfile.title || "",
+        bio: activeProfile.bio || "",
+        skills: activeProfile.skills?.map((s) => (typeof s === "string" ? s : s.name)) || [],
       });
     }
-  }, [user]);
+  }, [activeProfile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mutation = useMutation({
+  // Save profile mutation
+  const saveMutation = useMutation({
     mutationFn: (data: typeof form) =>
-      fetch("/api/users/me", {
+      fetch(`/api/profiles/${activeProfile!.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          skills: data.skills.map((s) => ({ name: s })),
-        }),
+        body: JSON.stringify({ ...data, skills: data.skills.map((s) => ({ name: s })) }),
       }).then((r) => r.json()),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-profile"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      setMessage({ type: "success", text: "Profile saved!" });
+      setTimeout(() => setMessage(null), 3000);
+    },
   });
 
+  // Create profile mutation
+  const createMutation = useMutation({
+    mutationFn: (name: string) =>
+      fetch("/api/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_name: name }),
+      }).then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error);
+        return data;
+      }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      setActiveProfileId(data.profile.id);
+      setMessage({ type: "success", text: "New profile created!" });
+      setTimeout(() => setMessage(null), 3000);
+    },
+    onError: (err: Error) => {
+      setMessage({ type: "error", text: err.message });
+    },
+  });
+
+  // Delete profile mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/profiles/${id}`, { method: "DELETE" }).then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error);
+        return data;
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      setActiveProfileId(null);
+      setMessage({ type: "success", text: "Profile deleted." });
+      setTimeout(() => setMessage(null), 3000);
+    },
+    onError: (err: Error) => {
+      setMessage({ type: "error", text: err.message });
+    },
+  });
+
+  // Set default mutation
+  const setDefaultMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/profiles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_default: true }),
+      }).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      setMessage({ type: "success", text: "Default profile updated." });
+      setTimeout(() => setMessage(null), 3000);
+    },
+  });
+
+  // CV Upload handler
   async function handleCvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !activeProfile) return;
 
     setCvParsing(true);
-    setCvError(null);
-    setCvResult(null);
+    setMessage(null);
 
     try {
       let cvText = "";
-
       if (file.type === "text/plain" || file.name.endsWith(".txt")) {
         cvText = await file.text();
-      } else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        // For PDF, we use a simple text extraction approach
-        // Read as ArrayBuffer and extract text (basic approach)
+      } else {
         const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        // Try to extract readable text from PDF binary
         const textDecoder = new TextDecoder("utf-8", { fatal: false });
-        const rawText = textDecoder.decode(uint8Array);
-        // Extract text between BT and ET markers (PDF text objects)
+        const rawText = textDecoder.decode(new Uint8Array(arrayBuffer));
         const textMatches = rawText.match(/\(([^)]+)\)/g);
         if (textMatches) {
-          cvText = textMatches
-            .map((m) => m.slice(1, -1))
-            .filter((t) => t.length > 2 && /[a-zA-Z]/.test(t))
-            .join(" ");
+          cvText = textMatches.map((m) => m.slice(1, -1)).filter((t) => t.length > 2 && /[a-zA-Z]/.test(t)).join(" ");
         }
-        // If extraction fails, try raw text approach
         if (cvText.length < 50) {
           cvText = rawText.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s+/g, " ").trim();
         }
-      } else {
-        // DOCX or other - read as text
-        cvText = await file.text();
       }
 
       if (cvText.length < 20) {
-        setCvError("Could not extract text from file. Please try a .txt or .pdf file, or paste your CV text manually.");
+        setMessage({ type: "error", text: "Could not extract text. Try .txt or .pdf." });
         setCvParsing(false);
         return;
       }
 
-      // Send to AI for parsing
       const res = await fetch("/api/ai/profile-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cvText: cvText.slice(0, 8000) }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to parse CV");
-      }
-
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to parse CV");
       const { profile } = await res.json();
 
-      // Auto-fill form with parsed data
       setForm((prev) => ({
-        full_name: profile.full_name || prev.full_name,
+        profile_name: prev.profile_name,
+        title: profile.position || prev.title,
         bio: profile.bio || prev.bio,
-        location: profile.location || prev.location,
-        company: profile.company || prev.company,
-        position: profile.position || prev.position,
         skills: profile.skills?.length
           ? [...new Set([...prev.skills, ...profile.skills.map((s: { name?: string } | string) => typeof s === "string" ? s : s.name || "")])]
           : prev.skills,
       }));
 
-      setCvResult(`Profile auto-filled from "${file.name}". Review the fields and save.`);
+      setMessage({ type: "success", text: `CV parsed from "${file.name}". Review and save.` });
     } catch (err) {
-      setCvError(err instanceof Error ? err.message : "Failed to parse CV");
+      setMessage({ type: "error", text: err instanceof Error ? err.message : "CV parse failed" });
     } finally {
       setCvParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
-
-  async function handleLinkedinImport() {
-    setLinkedinImporting(true);
-    setCvError(null);
-
-    try {
-      // Check if user has LinkedIn access token
-      const res = await fetch("/api/users/me");
-      const userData = await res.json();
-
-      if (!userData.linkedin_access_token) {
-        setCvError("Please sign in with LinkedIn first to import your profile. Use the LinkedIn button on the login page.");
-        setLinkedinImporting(false);
-        return;
-      }
-
-      // Fetch LinkedIn profile using access token
-      const profileRes = await fetch("/api/users/linkedin-import", {
-        method: "POST",
-      });
-
-      if (!profileRes.ok) {
-        const err = await profileRes.json();
-        throw new Error(err.error || "Failed to import LinkedIn profile");
-      }
-
-      const { profile } = await profileRes.json();
-
-      setForm((prev) => ({
-        full_name: profile.full_name || prev.full_name,
-        bio: profile.bio || prev.bio,
-        location: profile.location || prev.location,
-        company: profile.company || prev.company,
-        position: profile.position || prev.position,
-        skills: profile.skills?.length
-          ? [...new Set([...prev.skills, ...profile.skills])]
-          : prev.skills,
-      }));
-
-      setCvResult("Profile imported from LinkedIn. Review the fields and save.");
-    } catch (err) {
-      setCvError(err instanceof Error ? err.message : "Failed to import from LinkedIn");
-    } finally {
-      setLinkedinImporting(false);
     }
   }
 
@@ -194,177 +207,176 @@ export default function ProfilePage() {
     }
   }
 
-  function removeSkill(skill: string) {
-    setForm({ ...form, skills: form.skills.filter((s) => s !== skill) });
+  function handleCreateProfile() {
+    const name = prompt("Enter profile name (e.g., 'Frontend Developer', 'Product Manager'):");
+    if (name?.trim()) createMutation.mutate(name.trim());
   }
 
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Skeleton className="h-10 w-48 mb-6" />
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)}
+        <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
+      </div>
+    );
+  }
+
+  // If no profiles exist, create one automatically
+  if (profiles.length === 0 && !createMutation.isPending) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <PageHeader title="Profile" description="Set up your professional profile" />
+        <div className="glass-card p-8 text-center">
+          <Sparkles className="size-10 mx-auto mb-4 text-primary" />
+          <h2 className="text-xl font-semibold mb-2">Create Your First Profile</h2>
+          <p className="text-muted-foreground mb-6">
+            Start by creating a profile for your target role. You can add more profiles for different positions later.
+          </p>
+          <Button onClick={handleCreateProfile} className="gradient-primary text-stone-900 font-bold border-0 shadow-lg">
+            <Plus className="size-4 mr-2" /> Create Profile
+          </Button>
         </div>
       </div>
     );
   }
 
+  const userPlan = (session?.user as Record<string, unknown>)?.subscriptionPlan as string || "free";
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <PageHeader title="Profile" description="Manage your personal information" />
+      <PageHeader title="Profiles" description="Manage your professional profiles for different roles" />
 
-      {/* Import Section */}
-      <div className="glass-card p-6 mb-6">
-        <h2 className="font-semibold mb-4 flex items-center gap-2">
-          <Sparkles className="size-4 text-primary" />
-          Quick Import
-        </h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Auto-fill your profile by uploading a CV or importing from LinkedIn.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* CV Upload */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.txt,.doc,.docx"
-            onChange={handleCvUpload}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={cvParsing}
-            className="flex-1 h-11"
+      {/* Profile Tabs */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+        {profiles.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setActiveProfileId(p.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all border ${
+              p.id === activeProfile?.id
+                ? "border-primary/30 bg-primary/5 text-primary shadow-sm"
+                : "border-border hover:bg-muted text-muted-foreground"
+            }`}
           >
-            {cvParsing ? (
-              <Loader2 className="size-4 animate-spin mr-2" />
-            ) : (
-              <Upload className="size-4 mr-2" />
-            )}
-            {cvParsing ? "Parsing CV..." : "Upload CV"}
-            <span className="text-xs text-muted-foreground ml-1">(PDF, TXT)</span>
-          </Button>
-
-          {/* LinkedIn Import */}
-          <Button
-            variant="outline"
-            onClick={handleLinkedinImport}
-            disabled={linkedinImporting}
-            className="flex-1 h-11"
-          >
-            {linkedinImporting ? (
-              <Loader2 className="size-4 animate-spin mr-2" />
-            ) : (
-              <Link2 className="size-4 mr-2 text-[#0077B5]" />
-            )}
-            {linkedinImporting ? "Importing..." : "Import from LinkedIn"}
-          </Button>
-        </div>
-
-        {/* Status messages */}
-        {cvResult && (
-          <div className="flex items-start gap-2 mt-3 p-3 bg-emerald-500/10 rounded-lg text-sm text-emerald-700 dark:text-emerald-400">
-            <CheckCircle className="size-4 shrink-0 mt-0.5" />
-            {cvResult}
-          </div>
-        )}
-        {cvError && (
-          <div className="flex items-start gap-2 mt-3 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
-            <AlertCircle className="size-4 shrink-0 mt-0.5" />
-            {cvError}
-          </div>
-        )}
+            {p.is_default && <Star className="size-3 fill-current" />}
+            {p.profile_name}
+          </button>
+        ))}
+        <button
+          onClick={handleCreateProfile}
+          className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-dashed border-border transition-colors whitespace-nowrap"
+        >
+          <Plus className="size-3.5" /> New
+        </button>
       </div>
 
-      {/* Profile Form */}
-      <div className="glass-card p-6 md:p-8">
-        <form
-          onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }}
-          className="space-y-5"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
-            <Input id="full_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-          </div>
+      {/* Message */}
+      {message && (
+        <div className={`flex items-start gap-2 p-3 rounded-lg text-sm mb-4 ${
+          message.type === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-destructive/10 text-destructive"
+        }`}>
+          {message.type === "success" ? <CheckCircle className="size-4 shrink-0 mt-0.5" /> : <AlertCircle className="size-4 shrink-0 mt-0.5" />}
+          {message.text}
+        </div>
+      )}
 
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea id="bio" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} placeholder="A brief professional summary..." />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="position" className="flex items-center gap-1">
-                <Briefcase className="size-3" /> Position
-              </Label>
-              <Input id="position" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="Software Engineer" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company" className="flex items-center gap-1">
-                <GraduationCap className="size-3" /> Company
-              </Label>
-              <Input id="company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Acme Inc." />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-1">
-              <MapPin className="size-3" /> Location
-            </Label>
-            <Input id="location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Berlin, Germany" />
-          </div>
-
-          {/* Skills */}
-          <div className="space-y-2">
-            <Label>Skills</Label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {form.skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="gap-1 pr-1">
-                  {skill}
-                  <button type="button" onClick={() => removeSkill(skill)} className="hover:text-destructive">
-                    <X className="size-3" />
-                  </button>
-                </Badge>
-              ))}
-              {form.skills.length === 0 && (
-                <span className="text-xs text-muted-foreground">No skills added yet</span>
-              )}
+      {activeProfile && (
+        <>
+          {/* Quick Import */}
+          <div className="glass-card p-5 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-primary" /> Quick Import
+              </h3>
+              <div className="flex items-center gap-2">
+                {!activeProfile.is_default && (
+                  <Button variant="ghost" size="sm" onClick={() => setDefaultMutation.mutate(activeProfile.id)}>
+                    <Star className="size-3.5 mr-1" /> Set Default
+                  </Button>
+                )}
+                {!activeProfile.is_default && profiles.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => { if (confirm("Delete this profile?")) deleteMutation.mutate(activeProfile.id); }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex gap-2">
-              <Input
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
-                placeholder="Add a skill (e.g., React, Python)"
-                className="flex-1"
-              />
-              <Button type="button" variant="outline" onClick={addSkill} disabled={!newSkill.trim()}>
-                Add
+              <input ref={fileInputRef} type="file" accept=".pdf,.txt,.doc,.docx" onChange={handleCvUpload} className="hidden" />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={cvParsing} className="flex-1">
+                {cvParsing ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Upload className="size-3.5 mr-1.5" />}
+                {cvParsing ? "Parsing..." : "Upload CV"}
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1">
+                <Link2 className="size-3.5 mr-1.5 text-[#0077B5]" /> LinkedIn Import
               </Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
-            <Button
-              type="submit"
-              disabled={mutation.isPending}
-              className="gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl transition-all"
-            >
-              {mutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              {mutation.isPending ? "Saving..." : "Save Profile"}
-            </Button>
+          {/* Profile Form */}
+          <div className="glass-card p-6">
+            <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="profile_name">Profile Name</Label>
+                <Input id="profile_name" value={form.profile_name} onChange={(e) => setForm({ ...form, profile_name: e.target.value })} placeholder="e.g. Frontend Developer" />
+              </div>
 
-            {mutation.isSuccess && (
-              <span className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
-                <CheckCircle className="size-4" />
-                Profile updated!
-              </span>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="title" className="flex items-center gap-1"><Briefcase className="size-3" /> Target Position</Label>
+                <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Senior Software Engineer" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Professional Summary</Label>
+                <Textarea id="bio" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} placeholder="Brief summary tailored to this role..." />
+              </div>
+
+              {/* Skills */}
+              <div className="space-y-2">
+                <Label>Skills</Label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {form.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary" className="gap-1 pr-1">
+                      {skill}
+                      <button type="button" onClick={() => setForm({ ...form, skills: form.skills.filter((s) => s !== skill) })} className="hover:text-destructive"><X className="size-3" /></button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }} placeholder="Add a skill..." className="flex-1" />
+                  <Button type="button" variant="outline" onClick={addSkill} disabled={!newSkill.trim()}>Add</Button>
+                </div>
+              </div>
+
+              <Button type="submit" disabled={saveMutation.isPending} className="gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl transition-all">
+                {saveMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                {saveMutation.isPending ? "Saving..." : "Save Profile"}
+              </Button>
+            </form>
           </div>
-        </form>
-      </div>
+        </>
+      )}
+
+      {/* Upgrade CTA */}
+      {profiles.length >= (userPlan === "pro" ? 3 : userPlan === "premium" ? 999 : 1) && userPlan !== "premium" && (
+        <div className="glass-card p-5 mt-4 flex items-center gap-4">
+          <div className="gradient-primary rounded-xl p-2.5 text-white shadow-lg shrink-0">
+            <Crown className="size-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm">Need more profiles?</p>
+            <p className="text-xs text-muted-foreground">Upgrade to {userPlan === "free" ? "Pro" : "Premium"} for {userPlan === "free" ? "up to 3" : "unlimited"} profiles.</p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/pricing">Upgrade</Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
