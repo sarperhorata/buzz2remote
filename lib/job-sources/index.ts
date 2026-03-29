@@ -6,17 +6,23 @@ import { arbeitnow } from "./arbeitnow";
 import { himalayas } from "./himalayas";
 import { greenhouse } from "./greenhouse";
 import { lever } from "./lever";
+import { ashby } from "./ashby";
+import { workable } from "./workable";
 
 export type { RawJob, JobSource };
 
 export const allSources: JobSource[] = [
+  // Free APIs (no auth required)
   remoteok,
   jobicy,
   remotive,
   arbeitnow,
   himalayas,
+  // ATS platforms (58 + 67 + 14 + 19 = 158 company career pages)
   greenhouse,
   lever,
+  ashby,
+  workable,
 ];
 
 export interface FetchResult {

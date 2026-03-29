@@ -1,19 +1,25 @@
 import { JobSource, RawJob } from "./types";
 
-// Top remote-first companies using Lever ATS
+// 67 remote-first companies using Lever ATS (merged from distill export + curated list)
 const LEVER_COMPANIES = [
-  "Netflix", "shopify", "spotify", "databricks", "anthropic",
-  "openai", "scale", "huggingface", "replit", "wiz-inc",
-  "confluent", "airtable", "webflow", "retool", "loom",
-  "miro", "clickup", "calendly", "gong-io", "rippling",
-  "anduril", "palantir", "lacework", "cockroachlabs", "timescale",
+  "15five","airalo","airtable","anduril","anthropic","appen-2","aurora-dev",
+  "bigtime","binance","blum","calendly","circonus","clerky","clickup",
+  "cockroachlabs","codecombat","colibrigroup","collabora","confluent",
+  "databricks","dnc","elevatelabs","espresso","fireflyon","formulamonks",
+  "gate.io","girlswhocode","gong-io","heetch","huggingface","jumpcloud",
+  "kong","kraken","kungfu","lacework","lendbuzz","loom","miro","netflix",
+  "olo","openai","palantir","peerspace","picus","rainforest","rarible",
+  "replit","retool","rippling","roofstacks","sanabenefits","scale",
+  "seedify-fund","seerinteractive","shopify","skillshare","sonatype",
+  "spotify","strapi","superside","threecolts","timescale","tokenmetrics",
+  "vrchat","webflow","welocalize","wiz-inc",
 ];
 
 async function fetchLeverJobs(company: string): Promise<RawJob[]> {
   try {
     const res = await fetch(
       `https://api.lever.co/v0/postings/${company}?mode=json`,
-      { headers: { "User-Agent": "Buzz2Remote/1.0" } }
+      { headers: { "User-Agent": "Buzz2Remote/1.0" }, signal: AbortSignal.timeout(10000) }
     );
     if (!res.ok) return [];
 
@@ -22,7 +28,8 @@ async function fetchLeverJobs(company: string): Promise<RawJob[]> {
 
     return jobs
       .filter((job: Record<string, unknown>) => {
-        const loc = String(job.categories && (job.categories as Record<string, unknown>).location || "").toLowerCase();
+        const cats = (job.categories || {}) as Record<string, unknown>;
+        const loc = String(cats.location || "").toLowerCase();
         const title = String(job.text || "").toLowerCase();
         return loc.includes("remote") || loc.includes("anywhere") || title.includes("remote");
       })
@@ -54,18 +61,16 @@ export const lever: JobSource = {
   async fetch(): Promise<RawJob[]> {
     const allJobs: RawJob[] = [];
 
-    for (let i = 0; i < LEVER_COMPANIES.length; i += 5) {
-      const batch = LEVER_COMPANIES.slice(i, i + 5);
+    for (let i = 0; i < LEVER_COMPANIES.length; i += 8) {
+      const batch = LEVER_COMPANIES.slice(i, i + 8);
       const results = await Promise.allSettled(
         batch.map((company) => fetchLeverJobs(company))
       );
       for (const result of results) {
-        if (result.status === "fulfilled") {
-          allJobs.push(...result.value);
-        }
+        if (result.status === "fulfilled") allJobs.push(...result.value);
       }
-      if (i + 5 < LEVER_COMPANIES.length) {
-        await new Promise((r) => setTimeout(r, 1000));
+      if (i + 8 < LEVER_COMPANIES.length) {
+        await new Promise((r) => setTimeout(r, 500));
       }
     }
 

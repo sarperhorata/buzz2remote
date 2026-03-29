@@ -1,20 +1,23 @@
 import { JobSource, RawJob } from "./types";
 
-// Top remote-first companies using Greenhouse ATS
+// 58 remote-first companies using Greenhouse ATS (merged from distill export + curated list)
 const GREENHOUSE_COMPANIES = [
-  "gitlab", "hashicorp", "zapier", "automattic", "figma",
-  "stripe", "airbnb", "coinbase", "datadog", "twilio",
-  "elastic", "auth0", "netlify", "vercel", "supabase",
-  "notion", "linear", "dbt-labs", "snyk", "grafana-labs",
-  "discord", "cloudflare", "mongodb", "reddit", "instacart",
-  "gusto", "plaid", "brex", "ramp", "deel",
+  "airbnb","atomicvest","auth0","automattic","axios","bevy","beyondfinance",
+  "brex","cameo","cloudflare","coinbase","convertkit","datadog","dbt-labs",
+  "deel","discord","downingcapitalgroup","eclinicalsolutions","elastic",
+  "exodus54","figma","figure","fulfil","garnerhealth","generalassembly",
+  "gitlab","givedirectly","grafana-labs","gusto","hashicorp","inchargeenergy",
+  "instacart","linear","mongodb","netlify","notion","pandadoc","pitch",
+  "plaid","productpeople","ramp","recharge","reddit","revenuecat","roadie",
+  "snyk","sourcegraph91","stripe","supabase","thesis","twilio",
+  "userinterviews","vercel","wikimedia","woo","wyndlabs","xapo61","zapier",
 ];
 
 async function fetchGreenhouseJobs(company: string): Promise<RawJob[]> {
   try {
     const res = await fetch(
       `https://boards-api.greenhouse.io/v1/boards/${company}/jobs?content=true`,
-      { headers: { "User-Agent": "Buzz2Remote/1.0" } }
+      { headers: { "User-Agent": "Buzz2Remote/1.0" }, signal: AbortSignal.timeout(10000) }
     );
     if (!res.ok) return [];
 
@@ -53,20 +56,17 @@ export const greenhouse: JobSource = {
   async fetch(): Promise<RawJob[]> {
     const allJobs: RawJob[] = [];
 
-    // Fetch in batches of 5 to avoid rate limiting
-    for (let i = 0; i < GREENHOUSE_COMPANIES.length; i += 5) {
-      const batch = GREENHOUSE_COMPANIES.slice(i, i + 5);
+    // Fetch in batches of 8 to avoid rate limiting
+    for (let i = 0; i < GREENHOUSE_COMPANIES.length; i += 8) {
+      const batch = GREENHOUSE_COMPANIES.slice(i, i + 8);
       const results = await Promise.allSettled(
         batch.map((company) => fetchGreenhouseJobs(company))
       );
       for (const result of results) {
-        if (result.status === "fulfilled") {
-          allJobs.push(...result.value);
-        }
+        if (result.status === "fulfilled") allJobs.push(...result.value);
       }
-      // Small delay between batches
-      if (i + 5 < GREENHOUSE_COMPANIES.length) {
-        await new Promise((r) => setTimeout(r, 1000));
+      if (i + 8 < GREENHOUSE_COMPANIES.length) {
+        await new Promise((r) => setTimeout(r, 500));
       }
     }
 
