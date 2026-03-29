@@ -1,10 +1,10 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["partialIndexes"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 model activity_summaries {
@@ -134,7 +134,9 @@ model jobs {
   scraped_forms        scraped_forms[]
   user_applications    user_applications[]
 
-  @@unique([source, external_id], map: "ix_jobs_source_external_id", where: raw("((source IS NOT NULL) AND (external_id IS NOT NULL))"))
+  // Note: partial unique index exists in DB but Prisma v6 doesn't support where clause
+  // The actual DB constraint is: UNIQUE (source, external_id) WHERE source IS NOT NULL AND external_id IS NOT NULL
+  @@unique([source, external_id], map: "ix_jobs_source_external_id")
   @@index([company], map: "ix_jobs_company")
   @@index([is_active], map: "ix_jobs_is_active")
   @@index([job_type], map: "ix_jobs_job_type")
