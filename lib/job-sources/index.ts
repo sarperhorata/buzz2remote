@@ -8,6 +8,10 @@ import { greenhouse } from "./greenhouse";
 import { lever } from "./lever";
 import { ashby } from "./ashby";
 import { workable } from "./workable";
+import { breezy } from "./breezy";
+import { freshteam } from "./freshteam";
+import { smartrecruiters } from "./smartrecruiters-source";
+import { recruitee } from "./recruitee-source";
 
 export type { RawJob, JobSource };
 
@@ -18,11 +22,15 @@ export const allSources: JobSource[] = [
   remotive,
   arbeitnow,
   himalayas,
-  // ATS platforms (58 + 67 + 14 + 19 = 158 company career pages)
+  // ATS platforms (58+67+14+19+22+30+5+4 = 219 company career pages)
   greenhouse,
   lever,
   ashby,
   workable,
+  breezy,
+  freshteam,
+  smartrecruiters,
+  recruitee,
 ];
 
 export interface FetchResult {
