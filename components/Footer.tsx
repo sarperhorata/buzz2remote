@@ -31,14 +31,14 @@ const footerSections = [
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t bg-muted/30">
+    <footer className="mt-auto border-t bg-muted/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-1.5 mb-4 group">
               <BeeIcon size={28} className="group-hover:scale-110 transition-transform duration-300" />
-              <span className="text-lg font-bold gradient-text">Buzz2Remote</span>
+              <span className="text-lg font-bold text-foreground">Buzz2Remote</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Discover remote jobs from top companies worldwide. Your career, your location.

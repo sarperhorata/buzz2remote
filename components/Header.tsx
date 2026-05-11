@@ -30,13 +30,13 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/50">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 group">
             <BeeIcon size={36} className="group-hover:scale-110 transition-transform duration-300" />
-            <span className="text-xl font-bold gradient-text">Buzz2Remote</span>
+            <span className="text-xl font-bold text-foreground">Buzz2Remote</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -65,7 +65,7 @@ export default function Header() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="gradient-primary rounded-full size-9 flex items-center justify-center text-white text-sm font-semibold shadow-md hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="bg-primary text-primary-foreground rounded-full size-9 flex items-center justify-center text-sm font-semibold shadow-md hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {session.user?.name?.[0]?.toUpperCase() || "U"}
                   </button>
@@ -104,7 +104,7 @@ export default function Header() {
                 <Link href="/login" className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50">
                   Sign In
                 </Link>
-                <Button asChild className="gradient-primary text-white border-0 shadow-md hover:shadow-lg transition-all">
+                <Button asChild className="bg-primary text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all">
                   <Link href="/register">Get Started</Link>
                 </Button>
               </div>
@@ -166,7 +166,7 @@ export default function Header() {
                     Sign In
                   </Link>
                   <Link href="/register" onClick={() => setMenuOpen(false)} className="mt-1 block">
-                    <Button className="w-full gradient-primary text-white border-0">Get Started</Button>
+                    <Button className="w-full bg-primary text-primary-foreground border-0">Get Started</Button>
                   </Link>
                 </>
               )}

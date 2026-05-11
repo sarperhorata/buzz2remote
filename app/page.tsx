@@ -1,40 +1,32 @@
+"use client";
+
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, DollarSign, FileText, Search, ArrowRight, Briefcase, Building2, Users, Zap, Shield, MapPin, Clock } from "lucide-react";
-import { BeeIcon } from "@/components/BeeIcon";
-import { prisma } from "@/lib/db";
+import { Sparkles, DollarSign, FileText, Search, ArrowRight, Briefcase, Building2, Zap, MapPin, Clock } from "lucide-react";
 
-async function getHomeData() {
-  const [activeJobs, uniqueCompaniesResult, recentJobs] = await Promise.all([
-    prisma.jobs.count({ where: { is_active: true, archived: false } }),
-    prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(DISTINCT company) as count FROM jobs WHERE is_active = true`,
-    prisma.jobs.findMany({
-      where: { is_active: true, archived: false },
-      orderBy: { posted_date: "desc" },
-      take: 6,
-      select: {
-        id: true,
-        title: true,
-        company: true,
-        location: true,
-        salary_min: true,
-        salary_max: true,
-        salary_currency: true,
-        remote_type: true,
-        job_type: true,
-        posted_date: true,
-      },
-    }),
-  ]);
+// Types for data fetched on the server side via API
+interface Job {
+  id: string;
+  title: string;
+  company: string | null;
+  location: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+  remote_type: string | null;
+  job_type: string | null;
+  posted_date: Date | null;
+}
 
-  return {
-    activeJobs,
-    totalCompanies: Number(uniqueCompaniesResult[0]?.count ?? 0),
-    recentJobs,
-  };
+interface HomeData {
+  activeJobs: number;
+  totalCompanies: number;
+  recentJobs: Job[];
 }
 
 function timeAgo(date: Date | null) {
@@ -56,92 +48,105 @@ function formatSalary(min: number | null, max: number | null, currency: string |
   return `Up to $${fmt(max!)} ${cur}`;
 }
 
-export default async function Home() {
-  const { activeJobs, totalCompanies, recentJobs } = await getHomeData();
+export default function Home() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [data, setData] = useState<HomeData>({ activeJobs: 2609, totalCompanies: 237, recentJobs: [] });
+
+  useEffect(() => {
+    fetch("/api/home-data")
+      .then((r) => r.json())
+      .then((d: HomeData) => setData(d))
+      .catch(() => {});
+  }, []);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/jobs?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push("/jobs");
+    }
+  }
+
+  const { activeJobs, totalCompanies, recentJobs } = data;
 
   return (
-    <div>
+    <div className="bg-background">
       {/* Hero Section */}
-      <section className="relative overflow-hidden gradient-hero text-white min-h-[85vh] flex items-center">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/[0.07] animate-morph" style={{ animationDuration: "8s" }} />
-          <div className="absolute top-1/3 -left-32 w-72 h-72 bg-white/[0.05] animate-morph" style={{ animationDuration: "12s", animationDelay: "2s" }} />
-          <div className="absolute -bottom-20 right-1/3 w-56 h-56 bg-white/[0.04] animate-morph" style={{ animationDuration: "10s", animationDelay: "4s" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-3 h-3 rounded-full bg-amber-300/30 animate-orbit" style={{ animationDuration: "20s" }} />
+      <section className="bg-white pt-20 pb-16 md:pt-28 md:pb-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-full px-4 py-1.5 text-sm font-medium mb-8">
+            <span>🐝</span>
+            <span>{activeJobs.toLocaleString()} remote jobs available</span>
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-2 h-2 rounded-full bg-yellow-300/20 animate-orbit" style={{ animationDuration: "30s", animationDirection: "reverse" }} />
-          </div>
-          <div className="absolute top-[15%] left-[10%] w-1.5 h-1.5 rounded-full bg-white/40 animate-float" style={{ animationDuration: "4s" }} />
-          <div className="absolute top-[25%] right-[15%] w-1 h-1 rounded-full bg-white/30 animate-float" style={{ animationDuration: "5s", animationDelay: "1s" }} />
-          <div className="absolute bottom-[30%] left-[20%] w-2 h-2 rounded-full bg-white/20 animate-float" style={{ animationDuration: "7s", animationDelay: "2s" }} />
-          <div className="absolute top-[60%] right-[25%] w-1.5 h-1.5 rounded-full bg-white/25 animate-float" style={{ animationDuration: "6s", animationDelay: "3s" }} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        </div>
 
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36">
-          <div className="text-center max-w-3xl mx-auto animate-fade-in">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 text-sm font-medium mb-8 border border-white/20 shimmer-line">
-              <Sparkles className="size-4" />
-              AI-Powered Job Matching
-            </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight leading-tight">
-              Find Your Perfect
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-300">
-                Remote Job
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {activeJobs.toLocaleString()} remote positions from {totalCompanies}+ companies worldwide.
-              AI-powered matching to find your ideal role.
-            </p>
+          {/* H1 */}
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-6 leading-tight">
+            The smarter way to
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600">
+              find remote work
+            </span>
+          </h1>
 
-            {/* Search Bar in Hero */}
-            <div className="max-w-xl mx-auto mb-8">
-              <div className="flex items-center bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-1.5 shadow-2xl">
-                <div className="flex items-center flex-1 px-3">
-                  <Search className="size-5 text-white/60 shrink-0" />
-                  <span className="ml-3 text-white/50 text-sm">Search jobs, companies, skills...</span>
-                </div>
-                <Button asChild className="gradient-primary border-0 text-stone-900 font-bold shadow-lg hover:shadow-xl transition-all rounded-lg animate-pulse-glow">
-                  <Link href="/jobs">
-                    Browse Jobs
-                    <ArrowRight className="size-4 ml-1.5" />
-                  </Link>
-                </Button>
+          {/* Subtitle */}
+          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            Browse curated remote jobs from top companies. AI-powered matching, one-click apply.
+          </p>
+
+          {/* Search Form */}
+          <form onSubmit={handleSearch} className="max-w-xl mx-auto mb-8">
+            <div className="flex items-center bg-white border border-border rounded-xl shadow-sm p-1.5 gap-2">
+              <div className="flex items-center flex-1 px-3 gap-2">
+                <Search className="size-5 text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search jobs, companies, skills..."
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                />
               </div>
+              <Button
+                type="submit"
+                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-5 h-9 border-0 transition-colors"
+              >
+                Browse Jobs
+                <ArrowRight className="size-4 ml-1.5" />
+              </Button>
             </div>
+          </form>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" asChild className="gradient-primary text-stone-900 hover:opacity-90 font-bold shadow-xl text-base h-12 px-8 border-0">
-                <Link href="/jobs">
-                  <Briefcase className="size-5 mr-2" />
-                  Browse All Jobs
-                </Link>
-              </Button>
-              <Button size="lg" asChild className="bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 font-semibold text-base h-12 px-8 border border-white/30">
-                <Link href="/register">Create Account</Link>
-              </Button>
-            </div>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="lg" asChild className="bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base h-12 px-8 border-0 transition-colors">
+              <Link href="/jobs">
+                <Briefcase className="size-5 mr-2" />
+                Browse All Jobs
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="font-semibold text-base h-12 px-8">
+              <Link href="/register">Create Free Account</Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Stats Section - Real Data */}
-      <section className="relative -mt-12 z-10">
+      {/* Stats Section */}
+      <section className="border-t border-b border-border py-8 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 divide-x divide-border">
             {[
               { icon: Briefcase, label: "Remote Jobs", value: activeJobs.toLocaleString() },
               { icon: Building2, label: "Companies", value: `${totalCompanies}+` },
-              { icon: Users, label: "Job Seekers", value: "10,000+" },
+              { icon: Sparkles, label: "AI-Powered Matching", value: "Smart" },
             ].map((stat) => (
-              <div key={stat.label} className="glass-card p-5 text-center hover-lift shimmer-line">
-                <stat.icon className="size-6 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
-                <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+              <div key={stat.label} className="flex flex-col items-center gap-1 py-2 px-4">
+                <stat.icon className="size-5 text-amber-500 mb-1" />
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground font-medium text-center">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -151,10 +156,13 @@ export default async function Home() {
       {/* Recent Jobs Section */}
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8 animate-slide-up">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Latest <span className="gradient-text">Remote Jobs</span>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                Latest{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600">
+                  Remote Jobs
+                </span>
               </h2>
               <p className="text-muted-foreground mt-1">Fresh opportunities added today</p>
             </div>
@@ -165,102 +173,181 @@ export default async function Home() {
               </Link>
             </Button>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentJobs.map((job) => {
-              const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
-              const posted = timeAgo(job.posted_date);
-              return (
-                <Link key={job.id} href={`/jobs/${job.id}`} className="glass-card p-5 hover-lift group block">
-                  <h3 className="font-semibold group-hover:text-primary transition-colors truncate">{job.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                    <Building2 className="size-3.5 shrink-0" />
-                    <span className="truncate">{job.company}</span>
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    {job.location && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="size-3" />{job.location}
-                      </span>
+
+          {recentJobs.length === 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white border border-border rounded-xl shadow-sm p-5 animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-3" />
+                  <div className="h-3 bg-muted rounded w-1/2 mb-4" />
+                  <div className="h-3 bg-muted rounded w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentJobs.map((job) => {
+                const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
+                const posted = timeAgo(job.posted_date);
+                const initials = (job.company ?? "?").charAt(0).toUpperCase();
+                return (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="bg-white border border-border rounded-xl shadow-sm p-5 hover:shadow-md hover:border-amber-200 transition-all group block"
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground group-hover:text-amber-600 transition-colors truncate">
+                          {job.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Building2 className="size-3.5 shrink-0" />
+                          <span className="truncate">{job.company}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {job.location && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="size-3" />
+                          {job.location}
+                        </span>
+                      )}
+                      {posted && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="size-3" />
+                          {posted}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {job.remote_type && (
+                        <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100">
+                          {job.remote_type}
+                        </Badge>
+                      )}
+                      {job.job_type && (
+                        <Badge variant="secondary" className="text-xs">
+                          {job.job_type}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {salary && (
+                      <p className="text-xs font-semibold text-emerald-600 mt-3 flex items-center gap-1">
+                        <DollarSign className="size-3" />
+                        {salary}
+                      </p>
                     )}
-                    {posted && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="size-3" />{posted}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {job.remote_type && (
-                      <Badge className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">{job.remote_type}</Badge>
-                    )}
-                    {job.job_type && (
-                      <Badge variant="secondary" className="text-xs">{job.job_type}</Badge>
-                    )}
-                  </div>
-                  {salary && (
-                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
-                      <DollarSign className="size-3" />{salary}
-                    </p>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 md:py-28 bg-dot-pattern bg-animated-mesh">
+      <section className="py-20 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Why <span className="gradient-text">Buzz2Remote</span>?
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
+              Why{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600">
+                Buzz2Remote
+              </span>
+              ?
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Everything you need to land your dream remote job, powered by AI.
             </p>
           </div>
+
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { title: "AI-Powered Matching", desc: "Our AI analyzes your skills and experience to find the best matching remote jobs for you.", icon: Sparkles, gradient: "from-amber-500 to-yellow-400" },
-              { title: "Salary Estimation", desc: "Get accurate salary ranges for any remote position based on market data and your experience.", icon: DollarSign, gradient: "from-amber-600 to-orange-500" },
-              { title: "Smart CV Analysis", desc: "Upload your CV and get instant AI-powered feedback to improve your chances of landing a job.", icon: FileText, gradient: "from-yellow-500 to-amber-400" },
+              {
+                title: "AI-Powered Matching",
+                desc: "Our AI analyzes your skills and experience to find the best matching remote jobs for you.",
+                icon: Sparkles,
+              },
+              {
+                title: "Salary Estimation",
+                desc: "Get accurate salary ranges for any remote position based on market data and your experience.",
+                icon: DollarSign,
+              },
+              {
+                title: "Smart CV Analysis",
+                desc: "Upload your CV and get instant AI-powered feedback to improve your chances of landing a job.",
+                icon: FileText,
+              },
             ].map((feature) => (
-              <div key={feature.title} className="glass-card p-7 hover-lift group">
-                <div className={`w-12 h-12 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <feature.icon className="size-6 text-white" />
+              <div
+                key={feature.title}
+                className="bg-white border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="bg-amber-50 rounded-lg p-2.5 w-10 h-10 flex items-center justify-center mb-4">
+                  <feature.icon className="size-5 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-gradient-mesh">
+      {/* How It Works Section */}
+      <section className="py-20 md:py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              How It <span className="gradient-text">Works</span>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
+              How It{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600">
+                Works
+              </span>
             </h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">Three simple steps to your next remote career.</p>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Three simple steps to your next remote career.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-amber-500/30 via-yellow-500/30 to-orange-500/30" />
+
+          <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: "01", title: "Create Profile", desc: "Sign up and tell us about your skills, experience, and what you're looking for.", icon: Users },
-              { step: "02", title: "Get Matched", desc: "Our AI scans thousands of jobs to find the ones that fit you perfectly.", icon: Zap },
-              { step: "03", title: "Apply & Land", desc: "Apply with one click and track your applications all in one place.", icon: Shield },
-            ].map((item) => (
-              <div key={item.step} className="text-center relative">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-2xl gradient-primary flex items-center justify-center shadow-xl relative">
-                  <item.icon className="size-10 text-stone-900" />
-                  <span className="absolute -top-2 -right-2 bg-white dark:bg-card text-primary text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center shadow-lg border-2 border-primary/20">
-                    {item.step}
+              {
+                step: "01",
+                title: "Create Profile",
+                desc: "Sign up and tell us about your skills, experience, and what you're looking for.",
+                icon: Building2,
+              },
+              {
+                step: "02",
+                title: "Get Matched",
+                desc: "Our AI scans thousands of jobs to find the ones that fit you perfectly.",
+                icon: Zap,
+              },
+              {
+                step: "03",
+                title: "Apply & Land",
+                desc: "Apply with one click and track your applications all in one place.",
+                icon: Briefcase,
+              },
+            ].map((item, idx) => (
+              <div key={item.step} className="text-center">
+                <div className="relative inline-flex mb-6">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                    <item.icon className="size-7 text-amber-600" />
+                  </div>
+                  <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                    {idx + 1}
                   </span>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -269,27 +356,25 @@ export default async function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-dot-pattern">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden gradient-hero rounded-3xl px-8 py-16 md:px-16 text-center text-white">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/[0.06] animate-morph" style={{ animationDuration: "10s" }} />
-              <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-white/[0.04] animate-morph" style={{ animationDuration: "14s", animationDelay: "3s" }} />
-            </div>
-            <div className="relative">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                Ready to find your remote dream job?
-              </h2>
-              <p className="text-white/80 mb-8 text-lg max-w-xl mx-auto">
-                Join thousands of professionals who found their perfect remote position through Buzz2Remote.
-              </p>
-              <Button size="lg" asChild className="gradient-primary text-stone-900 hover:opacity-90 font-bold shadow-xl text-base h-12 px-8 border-0 animate-pulse-glow">
-                <Link href="/register">
-                  Get Started Free
-                  <ArrowRight className="size-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-amber-50 rounded-2xl p-12 text-center border border-amber-100">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
+              Start finding your remote job today
+            </h2>
+            <p className="text-muted-foreground mb-8 text-lg max-w-xl mx-auto">
+              Join thousands of professionals who found their perfect remote position through Buzz2Remote.
+            </p>
+            <Button
+              size="lg"
+              asChild
+              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base h-12 px-8 border-0 transition-colors"
+            >
+              <Link href="/register">
+                Get Started Free
+                <ArrowRight className="size-4 ml-2" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
