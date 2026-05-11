@@ -8,19 +8,29 @@ const PLAN_LIMITS = {
   premium: { profiles: Infinity, applicationsPerMonth: Infinity, aiCvAnalysis: true, salaryEstimation: true, coverLetter: true, autoApply: true, linkedinImport: true },
 } as const;
 
-function normalizePlan(plan: string | null | undefined): keyof typeof PLAN_LIMITS {
+export function hasActiveSubscription(status: string | null | undefined): boolean {
+  return status === "active" || status === "trialing";
+}
+
+function normalizePlan(plan: string | null | undefined, status?: string | null): keyof typeof PLAN_LIMITS {
+  // During a trial, treat the plan as its paid equivalent
+  if (status === "trialing") {
+    const p = (plan || "free").toLowerCase();
+    if (p === "pro") return "pro";
+    if (p === "premium") return "premium";
+  }
   const p = (plan || "free").toLowerCase();
   if (p === "pro") return "pro";
   if (p === "premium") return "premium";
   return "free";
 }
 
-export function getPlanLimits(plan: string | null | undefined) {
-  return PLAN_LIMITS[normalizePlan(plan)];
+export function getPlanLimits(plan: string | null | undefined, status?: string | null) {
+  return PLAN_LIMITS[normalizePlan(plan, status)];
 }
 
-export function getProfileLimit(plan: string | null | undefined): number {
-  return getPlanLimits(plan).profiles;
+export function getProfileLimit(plan: string | null | undefined, status?: string | null): number {
+  return getPlanLimits(plan, status).profiles;
 }
 
 export async function canCreateProfile(userId: string, plan: string | null | undefined): Promise<{ allowed: boolean; current: number; limit: number }> {
@@ -29,8 +39,8 @@ export async function canCreateProfile(userId: string, plan: string | null | und
   return { allowed: current < limit, current, limit };
 }
 
-export function hasFeature(plan: string | null | undefined, feature: keyof typeof PLAN_LIMITS.free): boolean {
-  const limits = getPlanLimits(plan);
+export function hasFeature(plan: string | null | undefined, feature: keyof typeof PLAN_LIMITS.free, status?: string | null): boolean {
+  const limits = getPlanLimits(plan, status);
   const value = limits[feature];
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value > 0;

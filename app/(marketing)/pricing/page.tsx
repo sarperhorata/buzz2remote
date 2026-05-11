@@ -1,16 +1,19 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
-
-export const metadata: Metadata = { title: "Pricing" };
+import { Check, X, Loader2 } from "lucide-react";
 
 const plans = [
   {
     name: "Free",
     price: "$0",
     period: "forever",
+    planKey: null,
     features: [
       { text: "Browse all jobs", included: true },
       { text: "10 applications/month", included: true },
@@ -29,6 +32,7 @@ const plans = [
     name: "Pro",
     price: "$9",
     period: "/month",
+    planKey: "pro",
     features: [
       { text: "Unlimited applications", included: true },
       { text: "3 profiles", included: true },
@@ -40,13 +44,14 @@ const plans = [
       { text: "Priority support", included: true },
     ],
     cta: "Start Free Trial",
-    href: "/register",
+    href: null,
     highlighted: true,
   },
   {
     name: "Premium",
     price: "$19",
     period: "/month",
+    planKey: "premium",
     features: [
       { text: "Everything in Pro", included: true },
       { text: "Unlimited profiles", included: true },
@@ -64,6 +69,42 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  async function handlePlanClick(planKey: string) {
+    setLoadingPlan(planKey);
+
+    // Not logged in — send to register with plan param
+    if (status !== "authenticated" || !session) {
+      router.push(`/register?plan=${planKey}`);
+      return;
+    }
+
+    // Logged in — start Stripe checkout
+    try {
+      const res = await fetch("/api/payment/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planKey }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        console.error("Checkout error:", data.error);
+        setLoadingPlan(null);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Checkout failed:", err);
+      setLoadingPlan(null);
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-20">
       <div className="text-center mb-14">
@@ -109,16 +150,56 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Button
-              asChild
-              className={`w-full h-11 font-semibold ${
-                plan.highlighted
-                  ? "bg-white text-foreground hover:bg-white/90 shadow-lg"
-                  : "gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl"
-              }`}
-            >
-              <Link href={plan.href}>{plan.cta}</Link>
-            </Button>
+
+            {/* Free plan: static link, no checkout */}
+            {plan.planKey === null && (
+              <Button
+                asChild
+                className={`w-full h-11 font-semibold ${
+                  plan.highlighted
+                    ? "bg-white text-foreground hover:bg-white/90 shadow-lg"
+                    : "gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl"
+                }`}
+              >
+                <Link href={plan.href!}>{plan.cta}</Link>
+              </Button>
+            )}
+
+            {/* Contact Us plan: static link */}
+            {plan.planKey !== null && plan.href !== null && (
+              <Button
+                asChild
+                className={`w-full h-11 font-semibold ${
+                  plan.highlighted
+                    ? "bg-white text-foreground hover:bg-white/90 shadow-lg"
+                    : "gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl"
+                }`}
+              >
+                <Link href={plan.href}>{plan.cta}</Link>
+              </Button>
+            )}
+
+            {/* Paid plans with checkout */}
+            {plan.planKey !== null && plan.href === null && (
+              <Button
+                onClick={() => handlePlanClick(plan.planKey!)}
+                disabled={loadingPlan === plan.planKey}
+                className={`w-full h-11 font-semibold ${
+                  plan.highlighted
+                    ? "bg-white text-foreground hover:bg-white/90 shadow-lg"
+                    : "gradient-primary text-stone-900 font-bold border-0 shadow-lg hover:shadow-xl"
+                }`}
+              >
+                {loadingPlan === plan.planKey ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  plan.cta
+                )}
+              </Button>
+            )}
           </div>
         ))}
       </div>

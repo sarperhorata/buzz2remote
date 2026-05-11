@@ -2,14 +2,18 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { BeeIcon } from "@/components/BeeIcon";
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,11 +40,41 @@ export default function RegisterPage() {
         return;
       }
 
-      await signIn("credentials", {
+      // Sign in after successful registration
+      const signInResult = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/dashboard",
+        redirect: false,
       });
+
+      if (signInResult?.error) {
+        setError("Registration succeeded but sign in failed. Please log in.");
+        setLoading(false);
+        return;
+      }
+
+      // If a paid plan was requested, redirect to Stripe checkout
+      if (plan && (plan === "pro" || plan === "premium")) {
+        try {
+          const checkoutRes = await fetch("/api/payment/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan }),
+          });
+
+          const checkoutData = await checkoutRes.json();
+
+          if (checkoutRes.ok && checkoutData.url) {
+            window.location.href = checkoutData.url;
+            return;
+          }
+        } catch {
+          // Fall through to dashboard if checkout fails
+        }
+      }
+
+      // Default: go to onboarding for new users
+      window.location.href = "/onboarding";
     } catch {
       setError("Something went wrong");
       setLoading(false);
@@ -63,13 +97,27 @@ export default function RegisterPage() {
             <p className="text-white/70 leading-relaxed">
               Create an account to discover remote jobs, track applications, and get AI-powered career tools.
             </p>
+            {plan && (plan === "pro" || plan === "premium") && (
+              <div className="mt-6 bg-white/10 rounded-xl p-4 text-sm">
+                <p className="font-semibold">
+                  {plan === "pro" ? "Pro" : "Premium"} plan selected
+                </p>
+                <p className="text-white/70 mt-1">
+                  After registration you&apos;ll start your 14-day free trial.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right - Form */}
         <div className="bg-card p-8 md:p-10">
           <h1 className="text-2xl font-bold mb-1">Create Account</h1>
-          <p className="text-sm text-muted-foreground mb-6">Get started with Buzz2Remote</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            {plan && (plan === "pro" || plan === "premium")
+              ? `Get started with a 14-day free ${plan === "pro" ? "Pro" : "Premium"} trial`
+              : "Get started with Buzz2Remote"}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
@@ -133,7 +181,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="h-10">
+              <Button variant="outline" onClick={() => signIn("google", { callbackUrl: plan ? `/api/payment/checkout?plan=${plan}` : "/onboarding" })} className="h-10">
                 <svg className="size-4 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -142,7 +190,7 @@ export default function RegisterPage() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" onClick={() => signIn("linkedin", { callbackUrl: "/dashboard" })} className="h-10">
+              <Button variant="outline" onClick={() => signIn("linkedin", { callbackUrl: plan ? `/api/payment/checkout?plan=${plan}` : "/onboarding" })} className="h-10">
                 <svg className="size-4 mr-2 text-[#0077B5]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                 </svg>
@@ -158,5 +206,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center"><Loader2 className="size-6 animate-spin" /></div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

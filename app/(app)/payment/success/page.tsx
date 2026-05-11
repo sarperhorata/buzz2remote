@@ -12,9 +12,12 @@ export default function PaymentSuccessPage() {
         <div className="gradient-primary rounded-full size-16 flex items-center justify-center mx-auto mb-6 shadow-lg animate-scale-in">
           <CheckCircle className="size-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Payment Successful!</h1>
+        <h1 className="text-2xl font-bold mb-2">You&apos;re All Set!</h1>
+        <p className="text-lg font-semibold text-primary mb-1">
+          Your 14-day free trial has started!
+        </p>
         <p className="text-muted-foreground mb-6">
-          Your subscription is now active. Enjoy all the premium features!
+          Enjoy all premium features — no charge until your trial ends.
         </p>
         <Button asChild className="gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all">
           <Link href="/dashboard">

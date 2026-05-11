@@ -50,6 +50,10 @@ export async function POST(request: NextRequest) {
       success_url: `${process.env.NEXTAUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXTAUTH_URL}/pricing`,
       metadata: { userId: user.id, plan },
+      subscription_data: {
+        trial_period_days: 14,
+        metadata: { userId: user.id, plan },
+      },
     });
 
     return NextResponse.json({ url: session.url });

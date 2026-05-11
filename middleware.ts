@@ -11,6 +11,19 @@ const protectedPaths = [
   "/notifications",
 ];
 
+// Paths that are exempt from the onboarding redirect
+const onboardingExemptPrefixes = [
+  "/onboarding",
+  "/api",
+  "/payment",
+  "/_next",
+  "/favicon.ico",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -37,6 +50,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Onboarding redirect: logged-in users who haven't completed onboarding
+  if (
+    isLoggedIn &&
+    !token.onboardingCompleted &&
+    !onboardingExemptPrefixes.some((prefix) => pathname.startsWith(prefix))
+  ) {
+    return NextResponse.redirect(new URL("/onboarding", request.url));
+  }
+
   return NextResponse.next();
 }
 
@@ -50,5 +72,7 @@ export const config = {
     "/resume-upload/:path*",
     "/notifications/:path*",
     "/admin/:path*",
+    "/jobs/:path*",
+    "/companies/:path*",
   ],
 };
