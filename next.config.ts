@@ -9,11 +9,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
-  // playwright is only used by the Jobgether scraper (local cron / dedicated
-  // worker, not Vercel serverless). Mark it as an external server package so
-  // Turbopack doesn't try to bundle it into the route — the route will fail
-  // at runtime on Vercel (no chromium binary) but at least the build succeeds.
-  serverExternalPackages: ["playwright"],
+  // playwright is in devDependencies and only used by the local-CLI Jobgether
+  // scraper (scripts/scrape-jobgether-test.ts). Nothing in the Next.js app
+  // imports it, so Turbopack should never encounter it.
 };
 
 export default nextConfig;
