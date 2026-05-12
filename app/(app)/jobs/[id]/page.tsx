@@ -1,10 +1,8 @@
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Briefcase, Globe, Award, DollarSign, ExternalLink } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -27,78 +25,78 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function JobDetailPage({ params }: Props) {
   const { id } = await params;
-  const job = await prisma.jobs.findUnique({ where: { id } });
+  const [job, session] = await Promise.all([
+    prisma.jobs.findUnique({ where: { id } }),
+    auth(),
+  ]);
 
   if (!job) notFound();
 
+  const isLoggedIn = !!session?.user;
+  const applyHref = isLoggedIn
+    ? `/api/jobs/${id}/apply`
+    : `/login?callbackUrl=/jobs/${id}`;
+  const applyText = isLoggedIn ? "Apply Now" : "Sign in to Apply";
+  const hasApplyUrl = !!(job.apply_url || job.source_url);
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link href="/jobs">
-          <ArrowLeft className="size-4 mr-1.5" />
-          Back to Jobs
-        </Link>
-      </Button>
+      <Link href="/jobs" className="text-blue-600 hover:underline text-sm mb-4 inline-block">
+        &larr; Back to Jobs
+      </Link>
 
-      <div className="glass-card p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-6 md:p-8">
+        <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {job.title}
             </h1>
-            <p className="text-lg text-muted-foreground">{job.company}</p>
+            <p className="text-lg text-gray-600 dark:text-gray-400">{job.company}</p>
           </div>
-          {job.apply_url && (
-            <Button asChild className="gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all shrink-0">
-              <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                Apply Now
-                <ExternalLink className="size-4 ml-1.5" />
-              </a>
-            </Button>
+          {hasApplyUrl && (
+            <a
+              href={applyHref}
+              target={isLoggedIn ? "_blank" : "_self"}
+              rel="noopener noreferrer"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition whitespace-nowrap"
+            >
+              {applyText}
+            </a>
           )}
         </div>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-6">
           {job.location && (
-            <Badge variant="secondary" className="gap-1">
-              <MapPin className="size-3" />{job.location}
-            </Badge>
+            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-sm">{job.location}</span>
           )}
           {job.job_type && (
-            <Badge variant="secondary" className="gap-1">
-              <Briefcase className="size-3" />{job.job_type}
-            </Badge>
+            <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm">{job.job_type}</span>
           )}
           {job.remote_type && (
-            <Badge className="gap-1 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-              <Globe className="size-3" />{job.remote_type}
-            </Badge>
+            <span className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">{job.remote_type}</span>
           )}
           {job.experience_level && (
-            <Badge variant="outline" className="gap-1">
-              <Award className="size-3" />{job.experience_level}
-            </Badge>
+            <span className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm">{job.experience_level}</span>
           )}
           {(job.salary_min || job.salary_max) && (
-            <Badge className="gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">
-              <DollarSign className="size-3" />
+            <span className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">
               {job.salary_min && job.salary_max
                 ? `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()} ${job.salary_currency || "USD"}`
                 : job.salary}
-            </Badge>
+            </span>
           )}
         </div>
 
         {/* Skills */}
         {Array.isArray(job.skills) && job.skills.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">Skills</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Skills</h2>
             <div className="flex flex-wrap gap-2">
               {(job.skills as string[]).map((skill) => (
-                <Badge key={skill} variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                <span key={skill} className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm">
                   {skill}
-                </Badge>
+                </span>
               ))}
             </div>
           </div>
@@ -107,9 +105,9 @@ export default async function JobDetailPage({ params }: Props) {
         {/* Description */}
         {job.description && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">Description</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Description</h2>
             <div
-              className="prose dark:prose-invert max-w-none"
+              className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
               dangerouslySetInnerHTML={{ __html: job.description }}
             />
           </div>
@@ -118,9 +116,9 @@ export default async function JobDetailPage({ params }: Props) {
         {/* Requirements */}
         {job.requirements && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">Requirements</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Requirements</h2>
             <div
-              className="prose dark:prose-invert max-w-none"
+              className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
               dangerouslySetInnerHTML={{ __html: job.requirements }}
             />
           </div>
@@ -129,23 +127,25 @@ export default async function JobDetailPage({ params }: Props) {
         {/* Benefits */}
         {job.benefits && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">Benefits</h2>
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Benefits</h2>
             <div
-              className="prose dark:prose-invert max-w-none"
+              className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
               dangerouslySetInnerHTML={{ __html: job.benefits }}
             />
           </div>
         )}
 
         {/* Apply Button */}
-        {job.apply_url && (
-          <div className="mt-8 pt-6 border-t">
-            <Button size="lg" asChild className="gradient-primary text-white border-0 shadow-lg hover:shadow-xl transition-all">
-              <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                Apply for this Position
-                <ExternalLink className="size-4 ml-2" />
-              </a>
-            </Button>
+        {hasApplyUrl && (
+          <div className="mt-8 pt-6 border-t dark:border-gray-700">
+            <a
+              href={applyHref}
+              target={isLoggedIn ? "_blank" : "_self"}
+              rel="noopener noreferrer"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-medium transition inline-block"
+            >
+              {isLoggedIn ? "Apply for this Position" : "Sign in to Apply"}
+            </a>
           </div>
         )}
       </div>
