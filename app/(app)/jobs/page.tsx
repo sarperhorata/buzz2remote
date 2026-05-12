@@ -72,6 +72,8 @@ interface CategoryItem {
 interface JobStats {
   total: number;
   today: number;
+  last48h: number;
+  embargoCutoff: string; // ISO timestamp — jobs posted after this are Pro-only for first 48h
 }
 
 async function fetchJobs(params: Record<string, string>) {
@@ -419,7 +421,17 @@ export default function JobsPage() {
     return s;
   }, [interactions?.dismisses, optimisticDismisses]);
 
-  // Client-side post-filters (type + remote + experience + salary + category + dismissed)
+  // Pro-tier detection: subscriptionPlan on the session token. trialing users
+  // also have a paid plan recorded, so checking for "pro" or "premium" covers
+  // both active subscribers and trial users.
+  const subscriptionPlan = (session?.user as { subscriptionPlan?: string | null } | undefined)?.subscriptionPlan;
+  const isPro = subscriptionPlan === "pro" || subscriptionPlan === "premium";
+
+  // "Be first in line": jobs posted in the last 48h are Pro-exclusive. Free
+  // users see them once the embargo expires (48h after posting).
+  const embargoCutoffMs = stats?.embargoCutoff ? new Date(stats.embargoCutoff).getTime() : 0;
+
+  // Client-side post-filters (type + remote + experience + salary + category + dismissed + embargo)
   const filteredJobs = useMemo(() => {
     return (data?.jobs ?? []).filter((job: Job) => {
       if (jobTypes.length > 0 && !jobTypes.some((t) => job.job_type === t)) return false;
@@ -428,9 +440,14 @@ export default function JobsPage() {
       if (!includeSalaryless && job.salary_min === null && job.salary_max === null) return false;
       if (activeCategory !== "All" && classifyJobTitle(job.title) !== activeCategory) return false;
       if (dismissSet.has(job.id)) return false;
+      // Embargo: hide last-48h jobs from free users.
+      if (!isPro && embargoCutoffMs && job.posted_date) {
+        const postedMs = new Date(job.posted_date).getTime();
+        if (postedMs >= embargoCutoffMs) return false;
+      }
       return true;
     });
-  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory, dismissSet]);
+  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory, dismissSet, isPro, embargoCutoffMs]);
 
   const visibleJobIds = useMemo(
     () => filteredJobs.map((j: Job) => j.id).slice(0, 50),
@@ -608,6 +625,32 @@ export default function JobsPage() {
           </button>
         )}
       </div>
+
+      {/* "Be first in line" — 48h embargo banner for free users */}
+      {!isPro && stats && stats.last48h > 0 && (
+        <div className="mb-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start sm:items-center gap-3 flex-col sm:flex-row">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3zm-7 9a7 7 0 0114 0H5z" />
+              </svg>
+            </div>
+            <div className="text-sm">
+              <p className="font-semibold text-blue-900">Be first in line.</p>
+              <p className="text-blue-700">
+                <span className="font-medium">{stats.last48h} new job{stats.last48h === 1 ? "" : "s"}</span> posted in the last 48 hours.
+                Pro members see them first — free users get access once the embargo expires.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/pricing"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap shrink-0"
+          >
+            Get Early Access
+          </Link>
+        </div>
+      )}
 
       {/* Results */}
       {isLoading ? (

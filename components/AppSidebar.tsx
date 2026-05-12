@@ -15,6 +15,7 @@ import {
   Heart,
   Bell,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { BeeIcon } from "@/components/BeeIcon";
 
@@ -31,6 +32,7 @@ const NAV_SECTIONS = [
     items: [
       { href: "/jobs", label: "All Matches", icon: Briefcase },
       { href: "/applications", label: "Applications", icon: Send },
+      { href: "/top-matches", label: "Top Matches", icon: Sparkles },
       { href: "/favorites", label: "Saved Jobs", icon: Heart },
       { href: "/notifications", label: "Notifications", icon: Bell },
     ],
