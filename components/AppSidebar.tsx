@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -16,6 +17,8 @@ import {
   Bell,
   Settings,
   Sparkles,
+  Menu,
+  X,
 } from "lucide-react";
 import { BeeIcon } from "@/components/BeeIcon";
 
@@ -56,6 +59,20 @@ const NAV_SECTIONS = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close the mobile drawer when navigating to a new route.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [mobileOpen]);
 
   const isActive = (href: string) => {
     // Exact match for dashboard to avoid matching everything
@@ -63,10 +80,10 @@ export default function AppSidebar() {
     return pathname.startsWith(href);
   };
 
-  return (
-    <aside className="w-64 min-h-screen bg-white border-r border-border flex flex-col shrink-0">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-border">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
         <Link href="/" className="flex items-center gap-2 group">
           <BeeIcon size={30} className="group-hover:scale-110 transition-transform duration-200" />
           <span className="text-lg font-bold">
@@ -74,6 +91,14 @@ export default function AppSidebar() {
             <span className="text-foreground">2Remote</span>
           </span>
         </Link>
+        {/* Close button (mobile drawer only) */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground"
+          aria-label="Close menu"
+        >
+          <X className="size-5" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -115,6 +140,42 @@ export default function AppSidebar() {
           </div>
         ))}
       </nav>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile open button — fixed top-left, only visible when drawer closed */}
+      {!mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden fixed top-20 left-3 z-30 bg-white border border-border rounded-lg p-2 shadow-md text-foreground"
+          aria-label="Open menu"
+        >
+          <Menu className="size-5" />
+        </button>
+      )}
+
+      {/* Desktop sidebar — always visible at md+ */}
+      <aside className="hidden md:flex w-64 min-h-screen bg-white border-r border-border flex-col shrink-0">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile drawer — slides in from left */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/40"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <aside className="md:hidden fixed top-0 left-0 z-50 w-64 h-screen bg-white border-r border-border flex flex-col shadow-xl">
+            {sidebarContent}
+          </aside>
+        </>
+      )}
+    </>
   );
 }
