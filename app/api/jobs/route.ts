@@ -58,7 +58,9 @@ export async function GET(request: NextRequest) {
           remote_type: true,
           work_type: true,
           skills: true,
-          apply_url: true,
+          // SECURITY: apply_url is intentionally excluded from public responses.
+          // It's accessed only via the auth-gated /api/jobs/[id]/apply redirect.
+          // Jobgether leaks their apply URLs via GA payloads — we don't.
           posted_date: true,
           created_at: true,
           views_count: true,

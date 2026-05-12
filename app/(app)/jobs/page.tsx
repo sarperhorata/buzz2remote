@@ -1,9 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { ThumbsUp, X } from "lucide-react";
 import { classifyJobTitle } from "@/lib/job-categories";
+
+// ─── MatchScoreBadge ───────────────────────────────────────────────────────
+
+function MatchScoreBadge({ score }: { score: number | null | undefined }) {
+  if (score === null || score === undefined) {
+    return (
+      <div
+        title="Complete your profile to see your match"
+        className="w-[52px] h-[52px] rounded-full border-2 border-dashed border-border flex items-center justify-center text-muted-foreground text-lg font-medium shrink-0"
+      >
+        ?
+      </div>
+    );
+  }
+
+  let ring = "#22c55e";
+  let text = "text-emerald-600";
+  if (score <= 40) {
+    ring = "#ef4444";
+    text = "text-red-500";
+  } else if (score <= 70) {
+    ring = "#f59e0b";
+    text = "text-amber-600";
+  }
+
+  const pct = Math.max(0, Math.min(100, score));
+  const bg = `conic-gradient(${ring} ${pct * 3.6}deg, #e5e7eb 0deg)`;
+
+  return (
+    <div
+      title={`${score}% match`}
+      className="relative w-[52px] h-[52px] rounded-full shrink-0 flex items-center justify-center"
+      style={{ background: bg }}
+    >
+      <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center">
+        <span className={`text-sm font-semibold ${text}`}>{score}</span>
+      </div>
+    </div>
+  );
+}
 
 interface Job {
   id: string;
@@ -298,7 +340,18 @@ const EXPERIENCE_LEVELS = ["Entry Level", "Junior", "Mid Level", "Senior", "Lead
 
 // ─── JobsPage ──────────────────────────────────────────────────────────────
 
+interface InteractionsData {
+  likes: string[];
+  dismisses: string[];
+}
+
+interface MatchScoresData {
+  scores: Record<string, number>;
+}
+
 export default function JobsPage() {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [page, setPage] = useState(1);
@@ -338,7 +391,35 @@ export default function JobsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Client-side post-filters (type + remote + experience + salary + category)
+  const { data: interactions } = useQuery<InteractionsData>({
+    queryKey: ["job-interactions"],
+    queryFn: () => fetch("/api/jobs/interactions").then((r) => r.json()),
+    enabled: !!session,
+  });
+
+  // Optimistic overlay so UI feels instant before invalidation roundtrip
+  const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
+  const [optimisticDismisses, setOptimisticDismisses] = useState<Record<string, boolean>>({});
+
+  const likeSet = useMemo(() => {
+    const s = new Set(interactions?.likes ?? []);
+    for (const [id, on] of Object.entries(optimisticLikes)) {
+      if (on) s.add(id);
+      else s.delete(id);
+    }
+    return s;
+  }, [interactions?.likes, optimisticLikes]);
+
+  const dismissSet = useMemo(() => {
+    const s = new Set(interactions?.dismisses ?? []);
+    for (const [id, on] of Object.entries(optimisticDismisses)) {
+      if (on) s.add(id);
+      else s.delete(id);
+    }
+    return s;
+  }, [interactions?.dismisses, optimisticDismisses]);
+
+  // Client-side post-filters (type + remote + experience + salary + category + dismissed)
   const filteredJobs = useMemo(() => {
     return (data?.jobs ?? []).filter((job: Job) => {
       if (jobTypes.length > 0 && !jobTypes.some((t) => job.job_type === t)) return false;
@@ -346,9 +427,99 @@ export default function JobsPage() {
       if (experienceLevels.length > 1 && !experienceLevels.some((l) => job.experience_level === l)) return false;
       if (!includeSalaryless && job.salary_min === null && job.salary_max === null) return false;
       if (activeCategory !== "All" && classifyJobTitle(job.title) !== activeCategory) return false;
+      if (dismissSet.has(job.id)) return false;
       return true;
     });
-  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory]);
+  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory, dismissSet]);
+
+  const visibleJobIds = useMemo(
+    () => filteredJobs.map((j: Job) => j.id).slice(0, 50),
+    [filteredJobs]
+  );
+
+  const { data: matchScoresData } = useQuery<MatchScoresData>({
+    queryKey: ["match-scores", visibleJobIds.join(",")],
+    queryFn: () =>
+      fetch("/api/jobs/match-scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobIds: visibleJobIds }),
+      }).then((r) => r.json()),
+    enabled: !!session && visibleJobIds.length > 0,
+  });
+  const scores = matchScoresData?.scores ?? {};
+
+  const interactionMutation = useMutation({
+    mutationFn: async ({
+      jobId,
+      type,
+      remove,
+    }: {
+      jobId: string;
+      type: "like" | "dismiss";
+      remove?: boolean;
+    }) => {
+      const res = await fetch(`/api/jobs/${jobId}/interactions`, {
+        method: remove ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: remove ? undefined : JSON.stringify({ type }),
+      });
+      if (!res.ok) throw new Error("Interaction failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-interactions"] });
+    },
+  });
+
+  const handleLike = (jobId: string, currentlyLiked: boolean) => {
+    if (!session) return;
+    setOptimisticLikes((m) => ({ ...m, [jobId]: !currentlyLiked }));
+    interactionMutation.mutate(
+      { jobId, type: "like", remove: currentlyLiked },
+      {
+        onError: () => {
+          setOptimisticLikes((m) => {
+            const next = { ...m };
+            delete next[jobId];
+            return next;
+          });
+        },
+        onSettled: () => {
+          // Clear overlay once server state is reconciled
+          setOptimisticLikes((m) => {
+            const next = { ...m };
+            delete next[jobId];
+            return next;
+          });
+        },
+      }
+    );
+  };
+
+  const handleDismiss = (jobId: string) => {
+    if (!session) return;
+    setOptimisticDismisses((m) => ({ ...m, [jobId]: true }));
+    interactionMutation.mutate(
+      { jobId, type: "dismiss" },
+      {
+        onError: () => {
+          setOptimisticDismisses((m) => {
+            const next = { ...m };
+            delete next[jobId];
+            return next;
+          });
+        },
+        onSettled: () => {
+          setOptimisticDismisses((m) => {
+            const next = { ...m };
+            delete next[jobId];
+            return next;
+          });
+        },
+      }
+    );
+  };
 
   const resetAll = () => {
     setSearch(""); setLocation(""); setJobTypes([]); setRemoteTypes([]);
@@ -460,55 +631,104 @@ export default function JobsPage() {
             Showing {filteredJobs.length.toLocaleString()} job{filteredJobs.length !== 1 ? "s" : ""}
           </p>
           <div className="space-y-3">
-            {filteredJobs.map((job: Job) => (
-              <Link
-                key={job.id}
-                href={`/jobs/${job.id}`}
-                className="block bg-white border border-border rounded-xl p-5 hover:shadow-md hover:border-amber-200 transition-all"
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-foreground truncate">{job.title}</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">{job.company}</p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {job.location && (
-                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{job.location}</span>
-                      )}
-                      {job.remote_type && (
-                        <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{job.remote_type}</span>
-                      )}
-                      {job.job_type && (
-                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{job.job_type}</span>
-                      )}
-                      {job.experience_level && (
-                        <span className="text-xs bg-violet-50 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-full">{job.experience_level}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {(job.salary_min || job.salary_max) && (
-                      <p className="text-sm font-semibold text-emerald-600">
-                        {job.salary_min && job.salary_max
-                          ? `$${(job.salary_min / 1000).toFixed(0)}k – $${(job.salary_max / 1000).toFixed(0)}k`
-                          : job.salary}
-                      </p>
-                    )}
-                    {job.posted_date && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {(() => {
-                          const diff = Date.now() - new Date(job.posted_date).getTime();
-                          const days = Math.floor(diff / 86400000);
-                          if (days === 0) return "Today";
-                          if (days === 1) return "Yesterday";
-                          if (days < 7) return `${days}d ago`;
-                          return `${Math.floor(days / 7)}w ago`;
-                        })()}
-                      </p>
+            {filteredJobs.map((job: Job) => {
+              const isLiked = likeSet.has(job.id);
+              const score = session
+                ? (Object.prototype.hasOwnProperty.call(scores, job.id) ? scores[job.id] : null)
+                : null;
+              return (
+                <div
+                  key={job.id}
+                  className="relative bg-white border border-border rounded-xl p-5 hover:shadow-md hover:border-amber-200 transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Match score (left) */}
+                    <MatchScoreBadge score={score} />
+
+                    {/* Job info (middle) — clickable to detail */}
+                    <Link href={`/jobs/${job.id}`} className="flex-1 min-w-0 block">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="min-w-0">
+                          <h2 className="text-base font-semibold text-foreground truncate">{job.title}</h2>
+                          <p className="text-sm text-muted-foreground mt-0.5">{job.company}</p>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {job.location && (
+                              <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{job.location}</span>
+                            )}
+                            {job.remote_type && (
+                              <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{job.remote_type}</span>
+                            )}
+                            {job.job_type && (
+                              <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{job.job_type}</span>
+                            )}
+                            {job.experience_level && (
+                              <span className="text-xs bg-violet-50 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-full">{job.experience_level}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {(job.salary_min || job.salary_max) && (
+                            <p className="text-sm font-semibold text-emerald-600">
+                              {job.salary_min && job.salary_max
+                                ? `$${(job.salary_min / 1000).toFixed(0)}k – $${(job.salary_max / 1000).toFixed(0)}k`
+                                : job.salary}
+                            </p>
+                          )}
+                          {job.posted_date && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {(() => {
+                                const diff = Date.now() - new Date(job.posted_date).getTime();
+                                const days = Math.floor(diff / 86400000);
+                                if (days === 0) return "Today";
+                                if (days === 1) return "Yesterday";
+                                if (days < 7) return `${days}d ago`;
+                                return `${Math.floor(days / 7)}w ago`;
+                              })()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Like + Dismiss (right) */}
+                    {session && (
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleLike(job.id, isLiked);
+                          }}
+                          aria-label={isLiked ? "Unlike job" : "Like job"}
+                          title={isLiked ? "Unlike" : "Like"}
+                          className={`w-9 h-9 rounded-full border flex items-center justify-center transition ${
+                            isLiked
+                              ? "bg-amber-500 border-amber-500 text-white"
+                              : "border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 bg-white"
+                          }`}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDismiss(job.id);
+                          }}
+                          aria-label="Dismiss job"
+                          title="Not interested"
+                          className="w-9 h-9 rounded-full border border-border text-muted-foreground hover:text-destructive hover:border-red-300 bg-white flex items-center justify-center transition"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination — hidden when category filter is active (already seeing full filtered set) */}
