@@ -8,7 +8,7 @@
  * Prints the scraped JobgetherJobData (including the recovered apply URL,
  * if any) as JSON to stdout.
  */
-import { scrapeJobgetherJob } from "../lib/scrapers/jobgether";
+import { scrapeJobgetherJob } from "./jobgether-scraper";
 
 const DEFAULT_URL =
   "https://jobgether.com/offer/69feb8788444a8266553aefa-product-manager";
