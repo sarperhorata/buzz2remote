@@ -1,5 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+// NOTE: this file uses Auth.js v5's `auth()` wrapper instead of the legacy
+// `getToken` from "next-auth/jwt". Auth.js v5 renamed the session cookie
+// from `__Secure-next-auth.session-token` to `__Secure-authjs.session-token`;
+// `getToken` from the legacy import looks for the old name, so it returned
+// `null` for genuinely-logged-in users and bounced them back to /login.
+//
+// Next.js 16 deprecates this file in favor of `proxy.ts`, but the convention
+// still works for now and Vercel logs only a warning. Will migrate later.
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
 const protectedPaths = [
   "/dashboard",
@@ -29,12 +37,10 @@ const onboardingExemptPrefixes = [
   "/reset-password",
 ];
 
-export async function middleware(request: NextRequest) {
+export default auth((request) => {
   const { pathname } = request.nextUrl;
-
-  // Check JWT token (lightweight, no Prisma import)
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  const isLoggedIn = !!token;
+  const session = request.auth;
+  const isLoggedIn = !!session?.user;
 
   // Protected routes
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
@@ -50,22 +56,24 @@ export async function middleware(request: NextRequest) {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (!token?.isAdmin) {
+    const user = session?.user as { isAdmin?: boolean } | undefined;
+    if (!user?.isAdmin) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
   // Onboarding redirect: logged-in users who haven't completed onboarding
+  const user = session?.user as { onboardingCompleted?: boolean } | undefined;
   if (
     isLoggedIn &&
-    !token.onboardingCompleted &&
+    user?.onboardingCompleted === false &&
     !onboardingExemptPrefixes.some((prefix) => pathname.startsWith(prefix))
   ) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
@@ -84,5 +92,6 @@ export const config = {
     "/cv-review/:path*",
     "/linkedin-optimizer/:path*",
     "/top-matches/:path*",
+    "/onboarding/:path*",
   ],
 };

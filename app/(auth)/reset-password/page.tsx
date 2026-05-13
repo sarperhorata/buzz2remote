@@ -8,6 +8,7 @@ import { BeeIcon } from "@/components/BeeIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 function ResetPasswordForm() {
   const params = useSearchParams();
@@ -96,9 +97,8 @@ function ResetPasswordForm() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <Label htmlFor="password" className="mb-1.5 block">New password</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             placeholder="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -109,9 +109,8 @@ function ResetPasswordForm() {
         </div>
         <div>
           <Label htmlFor="confirm" className="mb-1.5 block">Confirm password</Label>
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             placeholder="Type it again"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}

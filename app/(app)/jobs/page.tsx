@@ -421,17 +421,15 @@ export default function JobsPage() {
     return s;
   }, [interactions?.dismisses, optimisticDismisses]);
 
-  // Pro-tier detection: subscriptionPlan on the session token. trialing users
-  // also have a paid plan recorded, so checking for "pro" or "premium" covers
-  // both active subscribers and trial users.
+  // Pro-tier detection: used only to choose whether to show the "Be first in
+  // line" upsell banner. The actual embargo filter runs SERVER-SIDE in
+  // /api/jobs so pagination stays consistent — applying it on the client
+  // dropped entire pages of recent jobs and showed "No jobs found" while
+  // the header said "3,584 total".
   const subscriptionPlan = (session?.user as { subscriptionPlan?: string | null } | undefined)?.subscriptionPlan;
   const isPro = subscriptionPlan === "pro" || subscriptionPlan === "premium";
 
-  // "Be first in line": jobs posted in the last 48h are Pro-exclusive. Free
-  // users see them once the embargo expires (48h after posting).
-  const embargoCutoffMs = stats?.embargoCutoff ? new Date(stats.embargoCutoff).getTime() : 0;
-
-  // Client-side post-filters (type + remote + experience + salary + category + dismissed + embargo)
+  // Client-side post-filters (type + remote + experience + salary + category + dismissed)
   const filteredJobs = useMemo(() => {
     return (data?.jobs ?? []).filter((job: Job) => {
       if (jobTypes.length > 0 && !jobTypes.some((t) => job.job_type === t)) return false;
@@ -440,14 +438,9 @@ export default function JobsPage() {
       if (!includeSalaryless && job.salary_min === null && job.salary_max === null) return false;
       if (activeCategory !== "All" && classifyJobTitle(job.title) !== activeCategory) return false;
       if (dismissSet.has(job.id)) return false;
-      // Embargo: hide last-48h jobs from free users.
-      if (!isPro && embargoCutoffMs && job.posted_date) {
-        const postedMs = new Date(job.posted_date).getTime();
-        if (postedMs >= embargoCutoffMs) return false;
-      }
       return true;
     });
-  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory, dismissSet, isPro, embargoCutoffMs]);
+  }, [data?.jobs, jobTypes, remoteTypes, experienceLevels, includeSalaryless, activeCategory, dismissSet]);
 
   const visibleJobIds = useMemo(
     () => filteredJobs.map((j: Job) => j.id).slice(0, 50),

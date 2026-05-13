@@ -51,13 +51,29 @@ function formatSalary(min: number | null, max: number | null, currency: string |
 export default function Home() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [data, setData] = useState<HomeData>({ activeJobs: 2609, totalCompanies: 237, recentJobs: [] });
+  // Start with `null` so the stat row shows skeletons until the API responds.
+  // Hard-coding defaults (2609 / 237) misled users when /api/home-data was
+  // unreachable — the page would render stale stats forever.
+  const [data, setData] = useState<HomeData | null>(null);
 
   useEffect(() => {
     fetch("/api/home-data")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((d: HomeData) => setData(d))
-      .catch(() => {});
+      .catch(() => {
+        // Fallback only if the API truly fails — surface the latest known
+        // counts via /api/jobs/stats so we never show zeros.
+        fetch("/api/jobs/stats")
+          .then((r) => r.json())
+          .then((s: { total?: number }) => {
+            setData({
+              activeJobs: s.total ?? 0,
+              totalCompanies: 0,
+              recentJobs: [],
+            });
+          })
+          .catch(() => setData({ activeJobs: 0, totalCompanies: 0, recentJobs: [] }));
+      });
   }, []);
 
   function handleSearch(e: React.FormEvent) {
@@ -69,7 +85,10 @@ export default function Home() {
     }
   }
 
-  const { activeJobs, totalCompanies, recentJobs } = data;
+  const activeJobs = data?.activeJobs;
+  const totalCompanies = data?.totalCompanies;
+  const recentJobs = data?.recentJobs ?? [];
+  const statsLoading = data === null;
 
   return (
     <div className="bg-background">
@@ -79,7 +98,11 @@ export default function Home() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-full px-4 py-1.5 text-sm font-medium mb-8">
             <span>🐝</span>
-            <span>{activeJobs.toLocaleString()} remote jobs available</span>
+            <span>
+              {statsLoading
+                ? "Loading…"
+                : `${(activeJobs ?? 0).toLocaleString()} remote jobs available`}
+            </span>
           </div>
 
           {/* H1 */}
@@ -139,13 +162,25 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 divide-x divide-border">
             {[
-              { icon: Briefcase, label: "Remote Jobs", value: activeJobs.toLocaleString() },
-              { icon: Building2, label: "Companies", value: `${totalCompanies}+` },
+              {
+                icon: Briefcase,
+                label: "Remote Jobs",
+                value: statsLoading ? null : (activeJobs ?? 0).toLocaleString(),
+              },
+              {
+                icon: Building2,
+                label: "Companies",
+                value: statsLoading ? null : `${totalCompanies ?? 0}+`,
+              },
               { icon: Sparkles, label: "AI-Powered Matching", value: "Smart" },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center gap-1 py-2 px-4">
                 <stat.icon className="size-5 text-amber-500 mb-1" />
-                <p className="text-2xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                {stat.value === null ? (
+                  <span className="h-7 w-20 bg-muted/60 rounded animate-pulse" aria-label="Loading" />
+                ) : (
+                  <p className="text-2xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                )}
                 <p className="text-xs text-muted-foreground font-medium text-center">{stat.label}</p>
               </div>
             ))}

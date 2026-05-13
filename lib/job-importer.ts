@@ -68,7 +68,12 @@ function normalizeJob(raw: RawJob) {
     archived: false,
     is_translated: false,
     original_language: "en",
-    posted_date: postedDate || new Date(),
+    // Use the source's posted_date when available; otherwise leave null.
+    // Defaulting to `new Date()` caused every imported job to look "just
+    // posted", which (a) misled users and (b) triggered the 48h Pro embargo
+    // filter on the /jobs page so free users saw an empty list right after
+    // a fresh fetch. The embargo filter ignores null posted_dates.
+    posted_date: postedDate,
     views_count: 0,
     applications_count: 0,
     created_at: new Date(),
