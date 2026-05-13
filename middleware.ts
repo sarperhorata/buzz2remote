@@ -9,6 +9,11 @@ const protectedPaths = [
   "/settings",
   "/resume-upload",
   "/notifications",
+  "/coaching",
+  "/career-diagnosis",
+  "/cv-review",
+  "/linkedin-optimizer",
+  "/top-matches",
 ];
 
 // Paths that are exempt from the onboarding redirect
@@ -74,5 +79,10 @@ export const config = {
     "/admin/:path*",
     "/jobs/:path*",
     "/companies/:path*",
+    "/coaching/:path*",
+    "/career-diagnosis/:path*",
+    "/cv-review/:path*",
+    "/linkedin-optimizer/:path*",
+    "/top-matches/:path*",
   ],
 };

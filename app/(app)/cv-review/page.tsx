@@ -90,8 +90,30 @@ export default function CvReviewPage() {
           </div>
         )}
 
+        {/* Loading state — large card replaces the form during analysis so it's
+            unmissable. The previous spinner-in-button felt frozen for ~20s. */}
+        {!analysis && isLoading && (
+          <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
+            <div className="size-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
+              <svg className="animate-spin h-7 w-7 text-amber-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Analyzing your CV…</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Our AI is reading your experience, skills, and structure. This usually takes 10–20 seconds.
+            </p>
+            <div className="max-w-sm mx-auto space-y-2 text-left">
+              <Step done label="Parsing CV content" />
+              <Step done label="Extracting skills & experience" />
+              <Step active label="Generating feedback & scores" />
+            </div>
+          </div>
+        )}
+
         {/* Step 1 — Input */}
-        {!analysis && (
+        {!analysis && !isLoading && (
           <div className="bg-white rounded-xl border border-gray-200 p-8 space-y-5">
             {/* Job title */}
             <div>
@@ -229,6 +251,28 @@ export default function CvReviewPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function Step({ label, done, active }: { label: string; done?: boolean; active?: boolean }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      {done ? (
+        <svg className="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      ) : active ? (
+        <svg className="size-4 animate-spin text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      ) : (
+        <div className="size-4 rounded-full border-2 border-gray-200 shrink-0" />
+      )}
+      <span className={done ? "text-gray-500" : active ? "text-gray-900 font-medium" : "text-gray-400"}>
+        {label}
+      </span>
     </div>
   );
 }

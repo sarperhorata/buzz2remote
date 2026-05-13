@@ -82,8 +82,9 @@ export default function AppSidebar() {
 
   const sidebarContent = (
     <>
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
+      {/* Top bar — mobile drawer shows logo + close button; desktop just has a
+          divider since the global Header already shows the brand. */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0 md:hidden">
         <Link href="/" className="flex items-center gap-2 group">
           <BeeIcon size={30} className="group-hover:scale-110 transition-transform duration-200" />
           <span className="text-lg font-bold">
@@ -91,10 +92,9 @@ export default function AppSidebar() {
             <span className="text-foreground">2Remote</span>
           </span>
         </Link>
-        {/* Close button (mobile drawer only) */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground"
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground"
           aria-label="Close menu"
         >
           <X className="size-5" />

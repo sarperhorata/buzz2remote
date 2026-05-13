@@ -1,8 +1,8 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, getProviders } from "next-auth/react";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,22 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasGoogle, setHasGoogle] = useState(false);
+  const [hasLinkedIn, setHasLinkedIn] = useState(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
+  // Check which OAuth providers are actually configured. If GOOGLE_CLIENT_ID
+  // or LINKEDIN_CLIENT_ID env vars are missing, lib/auth.ts skips registering
+  // those providers — so we hide the corresponding buttons here.
+  useEffect(() => {
+    getProviders().then((providers) => {
+      setHasGoogle(!!providers?.google);
+      setHasLinkedIn(!!providers?.linkedin);
+    });
+  }, []);
+
+  const hasAnyOAuth = hasGoogle || hasLinkedIn;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +124,7 @@ function LoginForm() {
             </Button>
           </form>
 
+          {hasAnyOAuth && (
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -120,7 +135,8 @@ function LoginForm() {
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className={`mt-4 grid gap-3 ${hasGoogle && hasLinkedIn ? "grid-cols-2" : "grid-cols-1"}`}>
+              {hasGoogle && (
               <Button
                 variant="outline"
                 onClick={() => signIn("google", { callbackUrl })}
@@ -134,6 +150,8 @@ function LoginForm() {
                 </svg>
                 Google
               </Button>
+              )}
+              {hasLinkedIn && (
               <Button
                 variant="outline"
                 onClick={() => signIn("linkedin", { callbackUrl })}
@@ -144,8 +162,10 @@ function LoginForm() {
                 </svg>
                 LinkedIn
               </Button>
+              )}
             </div>
           </div>
+          )}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
