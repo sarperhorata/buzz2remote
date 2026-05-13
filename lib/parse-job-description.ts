@@ -39,6 +39,7 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
     key: "responsibilities",
     heading: "Responsibilities",
     synonyms: [
+      // English
       "key responsibilities",
       "your responsibilities",
       "responsibilities",
@@ -52,12 +53,46 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
       "day to day",
       "day-to-day",
       "the job",
+      "tasks",
+      "duties",
+      "what you do",
+      // German
+      "ihre aufgaben",
+      "deine aufgaben",
+      "aufgaben",
+      "ihr aufgabengebiet",
+      "ihre tätigkeiten",
+      "ihre verantwortlichkeiten",
+      "tätigkeiten",
+      // French
+      "vos missions",
+      "missions",
+      "responsabilités",
+      "vos responsabilités",
+      // Spanish
+      "responsabilidades",
+      "funciones",
+      "tus funciones",
+      // Italian
+      "responsabilità",
+      "mansioni",
+      // Portuguese
+      "responsabilidades",
+      "atividades",
+      // Turkish
+      "görevler",
+      "sorumluluklar",
+      "ne yapacaksın",
+      // Dutch
+      "verantwoordelijkheden",
+      "taken",
     ],
   },
   {
     key: "requirements",
     heading: "Requirements",
     synonyms: [
+      // English
       "minimum qualifications",
       "basic qualifications",
       "key requirements",
@@ -77,6 +112,44 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
       "skills required",
       "required skills",
       "what you need",
+      "who you are",
+      // German
+      "ihr profil",
+      "dein profil",
+      "anforderungen",
+      "was du mitbringst",
+      "was sie mitbringen",
+      "voraussetzungen",
+      "qualifikationen",
+      // French
+      "votre profil",
+      "profil recherché",
+      "exigences",
+      "qualifications",
+      "compétences",
+      // Spanish
+      "requisitos",
+      "perfil",
+      "tu perfil",
+      "qualificaciones",
+      // Italian
+      "requisiti",
+      "profilo",
+      "competenze",
+      // Portuguese
+      "requisitos",
+      "perfil",
+      "qualificações",
+      // Turkish
+      "aranan nitelikler",
+      "nitelikler",
+      "gereksinimler",
+      "profiliniz",
+      "aradığımız",
+      // Dutch
+      "wat je meebrengt",
+      "profiel",
+      "vereisten",
     ],
   },
   {
@@ -92,12 +165,17 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
       "plus",
       "pluses",
       "extras",
+      "wünschenswert",
+      "von vorteil",
+      "atouts",
+      "valorável",
     ],
   },
   {
     key: "benefits",
     heading: "Benefits",
     synonyms: [
+      // English
       "what we offer",
       "what you'll get",
       "what you will get",
@@ -109,6 +187,40 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
       "compensation & benefits",
       "why join us",
       "why you'll love it here",
+      // German
+      "wir bieten",
+      "was wir bieten",
+      "deine vorteile",
+      "ihre vorteile",
+      "benefits",
+      "leistungen",
+      // French
+      "ce que nous offrons",
+      "nous offrons",
+      "avantages",
+      "vos avantages",
+      // Spanish
+      "ofrecemos",
+      "qué ofrecemos",
+      "beneficios",
+      "ventajas",
+      // Italian
+      "cosa offriamo",
+      "offriamo",
+      "vantaggi",
+      "benefit",
+      // Portuguese
+      "o que oferecemos",
+      "oferecemos",
+      "benefícios",
+      // Turkish
+      "size sunduklarımız",
+      "sunduklarımız",
+      "yan haklar",
+      "avantajlar",
+      // Dutch
+      "wat wij bieden",
+      "voordelen",
     ],
   },
   {
@@ -123,6 +235,16 @@ const SECTION_PATTERNS: Array<{ key: string; heading: string; synonyms: string[]
       "company overview",
       "our company",
       "our mission",
+      "über uns",
+      "unser unternehmen",
+      "qui sommes-nous",
+      "notre entreprise",
+      "sobre nosotros",
+      "chi siamo",
+      "sobre nós",
+      "hakkımızda",
+      "şirket hakkında",
+      "over ons",
     ],
   },
 ];
@@ -148,13 +270,41 @@ function buildHeadingRegex(): RegExp {
     syn.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   );
 
-  // Match the heading optionally prefixed by markdown bold (**), preceded by
-  // a line break or start of string, optionally followed by ":" or "—".
-  // The trailing lookahead ensures we don't match inside a sentence.
+  // Match a heading anywhere in the text. The regex allows ANY whitespace
+  // boundary before the heading because legacy scraped descriptions are often
+  // a single flat line where one section just runs into the next:
+  //     "...gradually own product areas independently Requirements Strong..."
+  // The post-match filter (in findHeadingMatches below) rejects false
+  // positives by requiring the captured synonym to start with an uppercase
+  // letter — that way mid-sentence usage like "our requirements include X"
+  // won't be tagged as a heading.
+  //
+  // The trailing lookahead requires colon, dash, newline, or whitespace +
+  // capital letter — "Tasks like creating X" won't match, but
+  // "Tasks Investigate and resolve" will.
   return new RegExp(
-    `(?:^|\\n)\\s*(?:[*_#]{0,3})\\s*(${escaped.join("|")})\\s*[:\\-—]?\\s*(?:[*_]{0,3})\\s*(?=\\n|$)`,
+    `(?:^|\\n|\\s+)(?:[*_#]{0,3})\\s*(${escaped.join("|")})\\s*[:\\-—]?\\s*(?:[*_]{0,3})\\s*(?=\\n|\\s+[A-Z]|$)`,
     "gi"
   );
+}
+
+/** Find heading matches, filtered to those that are Title Cased in the source. */
+function findHeadingMatches(text: string): RegExpMatchArray[] {
+  const matches: RegExpMatchArray[] = [];
+  // Reset the lastIndex by using matchAll
+  const all = Array.from(text.matchAll(HEADING_REGEX));
+  for (const m of all) {
+    if (m.index === undefined) continue;
+    const synonym = m[1];
+    // First letter of the captured synonym in the SOURCE must be uppercase.
+    // This filters out "our requirements include X" while keeping "Requirements".
+    if (!synonym || synonym[0] !== synonym[0].toUpperCase() || synonym[0] === synonym[0].toLowerCase()) {
+      // Skip if synonym is lowercase in source (e.g. "requirements" mid-sentence)
+      continue;
+    }
+    matches.push(m);
+  }
+  return matches;
 }
 
 const HEADING_REGEX = buildHeadingRegex();
@@ -392,13 +542,12 @@ export function parseDescription(raw: string | null | undefined): ParsedDescript
   const language = detectLanguage(raw);
   const cleaned = preprocess(raw);
 
-  // Find all heading matches with their positions. matchAll is convenient
-  // but we also need the position of each match to slice the body out.
+  // Find all heading matches with their positions. The regex is permissive
+  // (any whitespace prefix); findHeadingMatches() filters to only Title-Cased
+  // occurrences to avoid mid-sentence false positives.
   const matches: Array<{ start: number; end: number; heading: string }> = [];
-  // Reset regex state — buildHeadingRegex is module-level.
-  HEADING_REGEX.lastIndex = 0;
-  let m: RegExpExecArray | null;
-  while ((m = HEADING_REGEX.exec(cleaned)) !== null) {
+  for (const m of findHeadingMatches(cleaned)) {
+    if (m.index === undefined) continue;
     const headingSyn = m[1];
     matches.push({
       start: m.index,

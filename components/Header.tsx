@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Menu, X, LogOut, User, Settings, LayoutDashboard, FileText, Briefcase, Building2, CreditCard, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,31 @@ const navLinks = [
   { href: "/pricing", label: "Pricing", icon: CreditCard },
 ];
 
+// Routes that render under the app layout (with sidebar). On mobile we hide
+// this Header for those routes so the AppSidebar drawer + its own hamburger
+// own the chrome — no duplicate "two hamburgers, one over the page title"
+// situation.
+const APP_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/jobs",
+  "/companies",
+  "/applications",
+  "/favorites",
+  "/notifications",
+  "/profile",
+  "/settings",
+  "/coaching",
+  "/career-diagnosis",
+  "/cv-review",
+  "/linkedin-optimizer",
+  "/top-matches",
+  "/onboarding",
+];
+
 export default function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const isAppRoute = APP_ROUTE_PREFIXES.some((p) => pathname?.startsWith(p));
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -30,7 +54,11 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
+    <header
+      className={`sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border ${
+        isAppRoute ? "hidden md:block" : ""
+      }`}
+    >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}

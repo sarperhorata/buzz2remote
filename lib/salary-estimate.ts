@@ -31,7 +31,10 @@ export type SalaryEstimate = {
   currency: string;
 };
 
-const MIN_SAMPLES = 10;
+// Lowered from 10 to 5 because most of the corpus doesn't post a structured
+// salary (only ~50 of ~3.5k jobs have salary_min/max). A ballpark from 5+
+// samples is still strictly better than no signal at all.
+const MIN_SAMPLES = 5;
 const SAMPLE_LIMIT = 200;
 const LOWER_OUTLIER = 5_000;
 const UPPER_OUTLIER = 1_000_000;

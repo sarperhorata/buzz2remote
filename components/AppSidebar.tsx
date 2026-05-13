@@ -145,11 +145,14 @@ export default function AppSidebar() {
 
   return (
     <>
-      {/* Mobile open button — fixed top-left, only visible when drawer closed */}
+      {/* Mobile open button — sits in the global Header strip (z above the
+          Header) so it doesn't overlap with page content. The global Header is
+          hidden on app routes via app/(app)/layout.tsx, leaving this hamburger
+          + the brand link as the mobile chrome. */}
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="md:hidden fixed top-20 left-3 z-30 bg-white border border-border rounded-lg p-2 shadow-md text-foreground"
+          className="md:hidden fixed top-3 left-3 z-[60] bg-white border border-border rounded-lg p-2 shadow-md text-foreground"
           aria-label="Open menu"
         >
           <Menu className="size-5" />

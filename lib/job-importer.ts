@@ -18,10 +18,31 @@ function normalizeJob(raw: RawJob) {
     if (isNaN(postedDate.getTime())) postedDate = null;
   }
 
-  // Clean HTML from description
+  // Clean HTML from description.
+  //
+  // CRITICAL: block-level HTML tags (<p>, <li>, <h*>, <div>, <br>, <ul>) must
+  // become newlines, not spaces. Otherwise the section parser sees a single
+  // line like "Tasks Investigate Fix bugs Requirements 5+ years..." with no
+  // structure and falls through to a single "Overview" block. Headings need
+  // their own line for the regex to anchor on.
   const cleanDesc = raw.description
+    // Step 1 — turn block-level tags into newlines BEFORE stripping all tags.
+    .replace(/<\s*(br|\/p|\/li|\/h[1-6]|\/div|\/section|\/article|\/header)[^>]*>/gi, "\n")
+    .replace(/<\s*(p|li|h[1-6]|div|section|article|header|ul|ol)\b[^>]*>/gi, "\n")
+    // Step 2 — strip remaining tags.
     .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
+    // Step 3 — common HTML entities.
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    // Step 4 — normalize whitespace WITHOUT collapsing newlines.
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim()
     .slice(0, 50000);
 

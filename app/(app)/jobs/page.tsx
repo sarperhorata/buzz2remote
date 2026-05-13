@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { ThumbsUp, X } from "lucide-react";
 import { classifyJobTitle } from "@/lib/job-categories";
@@ -354,12 +355,21 @@ interface MatchScoresData {
 export default function JobsPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("");
+  // Initial filter state hydrates from URL query params so deep links from job
+  // detail tags ("/jobs?location=Berlin&job_type=Full-time") work as expected.
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get("q") ?? "";
+  const initialLocation = searchParams.get("location") ?? "";
+  const initialJobType = searchParams.get("job_type");
+  const initialRemoteType = searchParams.get("remote_type");
+  const initialExperience = searchParams.get("experience_level");
+
+  const [search, setSearch] = useState(initialQ);
+  const [location, setLocation] = useState(initialLocation);
   const [page, setPage] = useState(1);
-  const [jobTypes, setJobTypes] = useState<string[]>([]);
-  const [remoteTypes, setRemoteTypes] = useState<string[]>([]);
-  const [experienceLevels, setExperienceLevels] = useState<string[]>([]);
+  const [jobTypes, setJobTypes] = useState<string[]>(initialJobType ? [initialJobType] : []);
+  const [remoteTypes, setRemoteTypes] = useState<string[]>(initialRemoteType ? [initialRemoteType] : []);
+  const [experienceLevels, setExperienceLevels] = useState<string[]>(initialExperience ? [initialExperience] : []);
   const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 0]);
   const [includeSalaryless, setIncludeSalaryless] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
