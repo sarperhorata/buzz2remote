@@ -1,5 +1,11 @@
 "use client";
 
+// Force-dynamic because the page hydrates filters from `useSearchParams()` —
+// Next.js 16 refuses to prerender pages that call useSearchParams without a
+// Suspense boundary (the deploy lands in ERROR right after "Generating
+// static pages"). Marking the page dynamic skips prerendering entirely.
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
