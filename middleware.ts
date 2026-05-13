@@ -1,13 +1,19 @@
-// NOTE: this file uses Auth.js v5's `auth()` wrapper instead of the legacy
-// `getToken` from "next-auth/jwt". Auth.js v5 renamed the session cookie
-// from `__Secure-next-auth.session-token` to `__Secure-authjs.session-token`;
-// `getToken` from the legacy import looks for the old name, so it returned
-// `null` for genuinely-logged-in users and bounced them back to /login.
+// EDGE-SAFE middleware.
 //
-// Next.js 16 deprecates this file in favor of `proxy.ts`, but the convention
-// still works for now and Vercel logs only a warning. Will migrate later.
+// Previous version imported `auth` from "@/lib/auth", which pulled the full
+// Auth.js machinery (providers, prisma, bcryptjs) into the edge runtime and
+// blew past the 1 MB compressed function size limit — deploys built fine and
+// then landed in "ERROR" state right after "onBuildComplete". To stay
+// edge-safe we instantiate NextAuth here with the minimal auth.config.ts and
+// use that wrapper.
+//
+// Next.js 16 deprecates the `middleware` convention in favor of `proxy.ts`.
+// We'll migrate later — the old convention still works with a warning.
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 const protectedPaths = [
   "/dashboard",
