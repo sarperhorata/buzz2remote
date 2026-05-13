@@ -166,11 +166,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+  /* bg-background lives on <html>, NOT <body> — see app/layout.tsx for why.
+     If body also has bg-background, Chrome/Safari treat it as if body
+     creates a stacking context and the fixed z-index: -1 AnimatedBackground
+     child paints UNDER body's bg → invisible. Body keeps text-foreground
+     for inherited colour, html owns the painted bg. */
   html {
-    @apply font-sans;
+    @apply bg-background font-sans;
+  }
+  body {
+    @apply text-foreground;
   }
 }
 
