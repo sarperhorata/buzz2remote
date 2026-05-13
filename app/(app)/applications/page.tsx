@@ -81,7 +81,7 @@ function CompanyAvatar({ company }: { company: string }) {
 
   if (errored || !company) {
     return (
-      <div className="size-9 shrink-0 rounded-md bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-semibold">
+      <div className="size-9 shrink-0 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-200 flex items-center justify-center text-sm font-semibold">
         {letter}
       </div>
     );
@@ -185,7 +185,7 @@ function ColumnHeader({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-card text-slate-800 text-xs font-semibold">
+      <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-card text-foreground text-xs font-semibold">
         {count}
       </span>
     </div>
@@ -264,7 +264,7 @@ export default function ApplicationsPage() {
   return (
     <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Applications</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Applications</h1>
         <p className="text-muted-foreground mt-1">
           Track everything from your job search in one Kanban.
         </p>
@@ -282,7 +282,7 @@ export default function ApplicationsPage() {
                 tooltip={col.tooltip}
                 headerClass={col.headerClass}
               />
-              <div className="flex-1 bg-muted/50/50 rounded-b-xl p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="flex-1 bg-muted/40 rounded-b-xl p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {isLoading ? (
                   <ColumnSkeleton />
                 ) : items.length === 0 ? (

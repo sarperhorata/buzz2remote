@@ -394,6 +394,43 @@ function parseSectionContent(body: string): string[] {
     return stripped.map((s) => s.bullet ?? s.original);
   }
 
+  // Heuristic A — many short lines, most look like list items:
+  //   When ≥ 70% of lines pass `looksLikeBullet` AND we have at least 3
+  //   lines, render them all as bullets. This catches scraped HTML where
+  //   the source had <li> items but lost the glyphs.
+  if (rawLines.length >= 3) {
+    const bulletyLines = rawLines.filter(looksLikeBullet).length;
+    if (bulletyLines / rawLines.length >= 0.7) {
+      return rawLines;
+    }
+  }
+
+  // Heuristic B — single fat line that's actually a flattened list:
+  //   QA flagged this on a Yoffix posting where Requirements rendered as
+  //   "Strong Practical Experience With React TypeScript Node.js Modern
+  //    frontend architecture API design and backend development …".
+  //   The source HTML lost both bullets AND line breaks before reaching
+  //   us, so we can't recover via normal splitting. Detect the pattern
+  //   (one long line with many TitleCase phrase starts) and split at
+  //   "lowercase end → space → Capital start" boundaries.
+  //   This over-splits proper nouns occasionally, but bullets-with-extra-
+  //   splits read FAR better than a 400-char unbroken paragraph.
+  if (rawLines.length === 1 && rawLines[0].length > 80) {
+    const line = rawLines[0];
+    // Count " Capital" runs as a cheap "is this a flattened list" probe.
+    const capRuns = (line.match(/\s[A-Z][a-zA-Z0-9]+/g) || []).length;
+    if (capRuns >= 5) {
+      // Split when a lowercase/digit ends a token AND the next token
+      // starts with Capital followed by ≥ 2 lowercase chars. Avoids
+      // splitting acronyms (CI/CD, R&D, UX/UI stay whole).
+      const phrases = line
+        .split(/(?<=[a-z0-9.)\]])\s+(?=[A-Z][a-zA-Z]{2,})/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 2);
+      if (phrases.length >= 3) return phrases;
+    }
+  }
+
   // Otherwise: paragraphs. Reassemble by merging lines that don't end in
   // sentence punctuation (handles wrapped text).
   const paragraphs: string[] = [];

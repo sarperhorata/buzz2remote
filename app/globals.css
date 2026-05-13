@@ -200,9 +200,18 @@
     background-image: linear-gradient(135deg, #D97706, #F59E0B);
   }
 
-  /* Hero gradient - artık light/white */
+  /* Hero gradient — used by the auth pages' decorative left panel. Was
+     simplified to plain bg-white during the redesign, which broke contrast
+     on white-text labels and also looked stark in dark mode (a single
+     opaque white panel inside an otherwise-dark login card). Reverted to
+     a proper amber gradient so the panel reads as a branded hero in BOTH
+     themes — white text stays legible on the warm gradient regardless of
+     the surrounding theme. */
   .gradient-hero {
-    @apply bg-white;
+    background-image: linear-gradient(135deg, #d97706, #f59e0b 55%, #fbbf24);
+  }
+  .dark .gradient-hero {
+    background-image: linear-gradient(135deg, #92400e, #b45309 55%, #d97706);
   }
 
   /* hover-lift - sadece subtle shadow, translate yok */

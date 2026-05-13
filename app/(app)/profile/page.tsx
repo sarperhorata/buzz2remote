@@ -496,6 +496,23 @@ function LinkedInImportModal({
   onLinkedInPdfImport: (file: File) => Promise<void>;
 }) {
   const localFileRef = useRef<HTMLInputElement>(null);
+  // Defer enabling the "click backdrop to close" handler by one event-loop
+  // tick. This fixes the "first click does nothing, second click opens"
+  // QA report (Bug #8): in some browser/test-runner combos the same
+  // click that flips the modal-open state propagates up to the freshly
+  // mounted backdrop and immediately closes it. With this gate, the
+  // close handler is a no-op for the first ~16 ms after mount.
+  const [canCloseOnBackdrop, setCanCloseOnBackdrop] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setCanCloseOnBackdrop(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+  // Allow ESC to close the modal even while the backdrop-click is gated.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   async function handleQuickImport() {
     if (!activeProfileId) {
@@ -538,7 +555,10 @@ function LinkedInImportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={canCloseOnBackdrop ? onClose : undefined}
+    >
       <div
         className="bg-card rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -555,22 +575,25 @@ function LinkedInImportModal({
 
         <div className="p-5 space-y-4">
           {/* Full PDF flow — primary action */}
-          <div className="border-2 border-amber-400 bg-amber-50/50 rounded-xl p-4">
+          <div className="border-2 border-amber-400 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/30 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <FileText className="size-4 text-amber-600" />
-                <h3 className="font-semibold text-sm">Full profile from LinkedIn PDF</h3>
+                <FileText className="size-4 text-amber-600 dark:text-amber-400" />
+                <h3 className="font-semibold text-sm text-foreground">Full profile from LinkedIn PDF</h3>
               </div>
               <span className="text-[10px] font-medium bg-amber-500 text-white px-2 py-0.5 rounded-full">RECOMMENDED</span>
             </div>
-            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+            {/* Bumped from text-muted-foreground (low contrast on amber bg) to
+                foreground/80 so the body text stays readable inside the
+                amber-tinted card in both themes. */}
+            <p className="text-xs text-foreground/80 mb-3 leading-relaxed">
               Export your LinkedIn profile as PDF and upload it here. This is the only way to import your full work
               experience, education, and skills — LinkedIn&apos;s API doesn&apos;t expose those fields to third-party apps.
             </p>
 
-            <ol className="text-xs text-muted-foreground space-y-1 mb-3 list-decimal list-inside">
+            <ol className="text-xs text-foreground/80 space-y-1 mb-3 list-decimal list-inside">
               <li>
-                Open <a href="https://www.linkedin.com/in/me/" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline inline-flex items-center gap-0.5">
+                Open <a href="https://www.linkedin.com/in/me/" target="_blank" rel="noopener noreferrer" className="text-amber-700 dark:text-amber-300 underline inline-flex items-center gap-0.5">
                   your LinkedIn profile <ExternalLink className="size-3" />
                 </a>
               </li>

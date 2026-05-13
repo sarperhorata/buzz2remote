@@ -501,7 +501,7 @@ function ExperienceCard({ value, onChange, onRemove }: {
   onRemove: () => void;
 }) {
   return (
-    <div className="border border-border rounded-lg p-3 bg-muted/30/50 space-y-2.5 relative">
+    <div className="border border-border rounded-lg p-3 bg-muted/30 space-y-2.5 relative">
       <button onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
         <Trash2 className="size-3.5" />
       </button>
@@ -555,7 +555,7 @@ function EducationCard({ value, onChange, onRemove }: {
   onRemove: () => void;
 }) {
   return (
-    <div className="border border-border rounded-lg p-3 bg-muted/30/50 space-y-2.5 relative">
+    <div className="border border-border rounded-lg p-3 bg-muted/30 space-y-2.5 relative">
       <button onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
         <Trash2 className="size-3.5" />
       </button>

@@ -98,7 +98,7 @@ export default function LinkedInOptimizerPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+          <div className="mb-6 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-lg px-4 py-3 text-sm">
             {error}
             <button
               onClick={fetchOptimization}
@@ -142,12 +142,12 @@ export default function LinkedInOptimizerPage() {
             </div>
 
             {/* 2. Quick fixes */}
-            <div className="bg-green-50 rounded-xl border border-green-200 p-6">
+            <div className="bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-900/50 p-6">
               <h2 className="font-bold text-foreground text-lg mb-4">⚡ Quick Fixes (under 5 min each)</h2>
               <ul className="space-y-3">
                 {optimization.quick_fixes.map((fix, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="text-green-500 text-lg shrink-0">☐</span>
+                    <span className="text-green-500 dark:text-green-400 text-lg shrink-0">☐</span>
                     <span className="text-sm text-foreground">{fix}</span>
                   </li>
                 ))}
@@ -164,7 +164,7 @@ export default function LinkedInOptimizerPage() {
                     href={linkedInSkillSearchUrl(skill)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-amber-50 text-amber-800 border border-amber-200 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors"
+                    className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900/50 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
                   >
                     + {skill}
                   </a>
@@ -187,13 +187,13 @@ export default function LinkedInOptimizerPage() {
             </div>
 
             {/* 5. Content strategy */}
-            <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900/50 p-6">
               <h2 className="font-bold text-foreground text-lg mb-4">📣 Content Strategy Ideas</h2>
               <div className="space-y-3">
                 {optimization.content_strategy.map((idea, i) => (
-                  <div key={i} className="bg-card rounded-lg border border-blue-100 px-4 py-3">
+                  <div key={i} className="bg-card rounded-lg border border-blue-100 dark:border-blue-900/40 px-4 py-3">
                     <div className="flex items-start gap-2">
-                      <span className="text-blue-400 font-bold text-sm shrink-0">{i + 1}.</span>
+                      <span className="text-blue-400 dark:text-blue-300 font-bold text-sm shrink-0">{i + 1}.</span>
                       <span className="text-sm text-foreground">{idea}</span>
                     </div>
                   </div>

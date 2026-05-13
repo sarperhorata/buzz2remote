@@ -20,9 +20,9 @@ function scoreColor(score: number): string {
 }
 
 function scoreBg(score: number): string {
-  if (score >= 71) return "border-green-500 bg-green-50";
-  if (score >= 41) return "border-amber-400 bg-amber-50";
-  return "border-red-400 bg-red-50";
+  if (score >= 71) return "border-green-500 bg-green-50 dark:bg-green-950/30";
+  if (score >= 41) return "border-amber-400 bg-amber-50 dark:bg-amber-950/30";
+  return "border-red-400 bg-red-50 dark:bg-red-950/30";
 }
 
 function ScoreCircle({ label, score }: { label: string; score: number }) {
@@ -204,7 +204,7 @@ export default function CvReviewPage() {
                   onDrop={onDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`cursor-pointer border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    dragActive ? "border-amber-500 bg-amber-50" : "border-border hover:border-amber-400 hover:bg-muted/30"
+                    dragActive ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40" : "border-border hover:border-amber-400 hover:bg-muted/30"
                   }`}
                 >
                   <input
@@ -264,7 +264,7 @@ export default function CvReviewPage() {
 
             {/* Job match badge */}
             {analysis.job_match_score !== undefined && jobTitle && (
-              <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">
+              <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-blue-800 dark:text-blue-200 text-sm font-medium px-4 py-2 rounded-full">
                 <span>🎯</span>
                 <span>
                   Job Match for <strong>{jobTitle}</strong>: {analysis.job_match_score}%
@@ -304,25 +304,25 @@ export default function CvReviewPage() {
                 </ul>
               </div>
 
-              <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
+              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50 p-5">
                 <h3 className="font-semibold text-foreground mb-3">💡 Specific Suggestions</h3>
                 <ul className="space-y-2">
                   {analysis.suggestions?.map((s, i) => (
                     <li key={i} className="text-sm text-foreground flex gap-2">
-                      <span className="text-amber-500 font-bold shrink-0">{i + 1}.</span>
+                      <span className="text-amber-500 dark:text-amber-400 font-bold shrink-0">{i + 1}.</span>
                       {s}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-blue-50 rounded-xl border border-blue-200 p-5">
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900/50 p-5">
                 <h3 className="font-semibold text-foreground mb-3">🔑 Missing Keywords</h3>
                 <div className="flex flex-wrap gap-2">
                   {analysis.keywords_missing?.map((kw, i) => (
                     <span
                       key={i}
-                      className="bg-card text-blue-700 border border-blue-200 text-xs font-medium px-2.5 py-1 rounded-full"
+                      className="bg-card text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 text-xs font-medium px-2.5 py-1 rounded-full"
                     >
                       {kw}
                     </span>

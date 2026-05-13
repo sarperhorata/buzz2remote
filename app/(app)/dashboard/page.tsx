@@ -206,13 +206,17 @@ function PrioritiesCard({ data }: { data: PrioritiesResponse }) {
             <div
               key={p.id}
               className={`flex flex-col rounded-xl border p-4 ${
-                p.completed ? "bg-green-50 border-green-200" : "bg-muted/30 border-border"
+                p.completed
+                  ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50"
+                  : "bg-muted/30 border-border"
               }`}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div
                   className={`size-9 rounded-lg flex items-center justify-center ${
-                    p.completed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+                    p.completed
+                      ? "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-300"
+                      : "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300"
                   }`}
                 >
                   {p.completed ? <CheckCircle2 className="size-5" /> : <Icon className="size-5" />}
@@ -227,7 +231,7 @@ function PrioritiesCard({ data }: { data: PrioritiesResponse }) {
                   asChild
                   size="sm"
                   variant="outline"
-                  className="w-full text-green-700 border-green-300 hover:bg-green-100 hover:text-green-800"
+                  className="w-full text-green-700 dark:text-green-300 border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 hover:text-green-800 dark:hover:text-green-200"
                 >
                   <Link href={p.actionHref}>
                     <CheckCircle2 className="size-4 mr-1" /> Completed
@@ -238,7 +242,7 @@ function PrioritiesCard({ data }: { data: PrioritiesResponse }) {
                   asChild
                   size="sm"
                   variant="outline"
-                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                  className="w-full border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-800 dark:hover:text-amber-200"
                 >
                   <Link href={p.actionHref}>
                     {p.actionLabel} <ArrowRight className="size-3.5 ml-1" />
@@ -299,25 +303,25 @@ function MatchesCard({
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <div className="rounded-xl border border-border bg-green-50/50 p-4">
+        <div className="rounded-xl border border-border bg-green-50/50 dark:bg-green-950/20 p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
             New This Week
           </p>
-          <p className="text-2xl font-bold mt-1 text-green-700">{stats.newThisWeek}</p>
+          <p className="text-2xl font-bold mt-1 text-green-700 dark:text-green-300">{stats.newThisWeek}</p>
           <p className="text-xs text-muted-foreground mt-1">Updated weekly</p>
         </div>
-        <div className="rounded-xl border border-border bg-amber-50/50 p-4">
+        <div className="rounded-xl border border-border bg-amber-50/50 dark:bg-amber-950/20 p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
             Active Matches
           </p>
-          <p className="text-2xl font-bold mt-1 text-amber-700">{stats.activeMatches}+</p>
+          <p className="text-2xl font-bold mt-1 text-amber-700 dark:text-amber-300">{stats.activeMatches}+</p>
           <p className="text-xs text-muted-foreground mt-1">Across all roles</p>
         </div>
-        <div className="rounded-xl border border-border bg-purple-50/50 p-4">
+        <div className="rounded-xl border border-border bg-purple-50/50 dark:bg-purple-950/20 p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
             Jobs Applied
           </p>
-          <p className="text-2xl font-bold mt-1 text-purple-700">{stats.jobsApplied}</p>
+          <p className="text-2xl font-bold mt-1 text-purple-700 dark:text-purple-300">{stats.jobsApplied}</p>
           <p className="text-xs text-muted-foreground mt-1">{stats.likedCount} liked</p>
         </div>
         <div className="rounded-xl border border-border bg-muted/30 p-4">
@@ -342,7 +346,7 @@ function MatchesCard({
             {stats.topIndustries.map((ind) => (
               <Badge
                 key={ind}
-                className="bg-green-100 text-green-700 hover:bg-green-100 border-0"
+                className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900/50 border-0"
               >
                 {ind}
               </Badge>
