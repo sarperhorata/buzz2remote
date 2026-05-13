@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { BeeIcon } from "@/components/BeeIcon";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_SECTIONS = [
   {
@@ -93,13 +94,16 @@ export default function AppSidebar() {
             <span className="text-foreground">2Remote</span>
           </span>
         </Link>
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground"
-          aria-label="Close menu"
-        >
-          <X className="size-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle className="text-muted-foreground" />
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-muted text-muted-foreground"
+            aria-label="Close menu"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -123,7 +127,7 @@ export default function AppSidebar() {
                         "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         active
                           ? "bg-amber-50 text-amber-700 border-l-2 border-amber-500"
-                          : "text-muted-foreground hover:bg-gray-50 hover:text-foreground border-l-2 border-transparent"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground border-l-2 border-transparent"
                       )}
                     >
                       <Icon
@@ -153,7 +157,7 @@ export default function AppSidebar() {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="md:hidden fixed top-3 left-3 z-[60] bg-white border border-border rounded-lg p-2 shadow-md text-foreground"
+          className="md:hidden fixed top-3 left-3 z-[60] bg-card border border-border rounded-lg p-2 shadow-md text-foreground"
           aria-label="Open menu"
         >
           <Menu className="size-5" />
@@ -161,7 +165,7 @@ export default function AppSidebar() {
       )}
 
       {/* Desktop sidebar — always visible at md+ */}
-      <aside className="hidden md:flex w-64 min-h-screen bg-white border-r border-border flex-col shrink-0">
+      <aside className="hidden md:flex w-64 min-h-screen bg-card border-r border-border flex-col shrink-0">
         {sidebarContent}
       </aside>
 
@@ -175,7 +179,7 @@ export default function AppSidebar() {
             aria-hidden="true"
           />
           {/* Drawer */}
-          <aside className="md:hidden fixed top-0 left-0 z-50 w-64 h-screen bg-white border-r border-border flex flex-col shadow-xl">
+          <aside className="md:hidden fixed top-0 left-0 z-50 w-64 h-screen bg-card border-r border-border flex flex-col shadow-xl">
             {sidebarContent}
           </aside>
         </>

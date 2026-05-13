@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
@@ -28,7 +29,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(inter.variable, "antialiased")} suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col bg-background text-foreground bg-gradient-mesh">
+      <body className="min-h-screen flex flex-col bg-background text-foreground">
+        {/* AnimatedBackground sits BEFORE Providers so it can render even
+            during the initial paint (the orbs are server-rendered, no
+            client JS, no hydration cost). z-index: -1 in CSS keeps it
+            behind everything. */}
+        <AnimatedBackground />
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>
