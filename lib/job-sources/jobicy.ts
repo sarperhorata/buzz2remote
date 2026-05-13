@@ -5,18 +5,16 @@ export const jobicy: JobSource = {
   async fetch(): Promise<RawJob[]> {
     const allJobs: RawJob[] = [];
 
-    // Fetch multiple pages (max 50 per page)
-    for (let page = 1; page <= 5; page++) {
-      const res = await fetch(
-        `https://jobicy.com/api/v2/remote-jobs?count=50&page=${page}`,
-        { headers: { "User-Agent": "Buzz2Remote/1.0" } }
-      );
-      if (!res.ok) break;
-
-      const data = await res.json();
-      const jobs = data.jobs || [];
-      if (jobs.length === 0) break;
-
+    // Jobicy API v2 no longer accepts `page` param (returns HTTP 400). Single
+    // call with the maximum count returns the most recent jobs.
+    const res = await fetch(
+      `https://jobicy.com/api/v2/remote-jobs?count=100`,
+      { headers: { "User-Agent": "Buzz2Remote/1.0" }, signal: AbortSignal.timeout(15000) }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const jobs = data.jobs || [];
+    {
       for (const job of jobs) {
         allJobs.push({
           title: String(job.jobTitle || ""),
