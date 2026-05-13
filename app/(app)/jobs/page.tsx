@@ -1,16 +1,18 @@
 "use client";
 
-// Force-dynamic because the page hydrates filters from `useSearchParams()` —
-// Next.js 16 refuses to prerender pages that call useSearchParams without a
-// Suspense boundary (the deploy lands in ERROR right after "Generating
-// static pages"). Marking the page dynamic skips prerendering entirely.
+// Force-dynamic AND a Suspense boundary around the useSearchParams-consuming
+// inner component. Both are needed: force-dynamic stops Next.js 16 from trying
+// to prerender at build time, and Suspense satisfies its runtime invariant
+// that any client component using useSearchParams sits inside a boundary
+// (otherwise the build still errors at "Generating static pages" with
+// "useSearchParams() should be wrapped in a suspense boundary").
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Suspense, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { ThumbsUp, X } from "lucide-react";
 import { classifyJobTitle } from "@/lib/job-categories";
 
@@ -358,7 +360,32 @@ interface MatchScoresData {
   scores: Record<string, number>;
 }
 
+// Suspense fallback — match the page chrome (max-w-7xl, padding) so the layout
+// doesn't shift when filters hydrate. Just a skeleton list; the real header /
+// filter bar mounts almost immediately.
+function JobsPageFallback() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="h-8 w-48 bg-muted rounded animate-pulse mb-2" />
+      <div className="h-4 w-72 bg-muted rounded animate-pulse mb-8" />
+      <div className="space-y-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-28 bg-muted/50 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function JobsPage() {
+  return (
+    <Suspense fallback={<JobsPageFallback />}>
+      <JobsPageInner />
+    </Suspense>
+  );
+}
+
+function JobsPageInner() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   // Initial filter state hydrates from URL query params so deep links from job
