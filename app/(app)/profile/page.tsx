@@ -141,7 +141,13 @@ export default function ProfilePage() {
     },
   });
 
-  // CV Upload handler
+  // CV Upload handler — server-side extraction via /api/cv/upload. The old
+  // implementation tried to extract PDF text from raw bytes with a regex
+  // (`\(([^)]+)\)` matching parenthesized strings), which only worked for
+  // the simplest text-based PDFs and silently produced garbage on anything
+  // exported by Word, Pages, Canva, etc. The new endpoint runs unpdf /
+  // mammoth on the server and also kicks off profile-autofill in the same
+  // call, so the round-trip count drops from 2 → 1.
   async function handleCvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !activeProfile) return;
@@ -150,47 +156,50 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      let cvText = "";
-      if (file.type === "text/plain" || file.name.endsWith(".txt")) {
-        cvText = await file.text();
-      } else {
-        const arrayBuffer = await file.arrayBuffer();
-        const textDecoder = new TextDecoder("utf-8", { fatal: false });
-        const rawText = textDecoder.decode(new Uint8Array(arrayBuffer));
-        const textMatches = rawText.match(/\(([^)]+)\)/g);
-        if (textMatches) {
-          cvText = textMatches.map((m) => m.slice(1, -1)).filter((t) => t.length > 2 && /[a-zA-Z]/.test(t)).join(" ");
-        }
-        if (cvText.length < 50) {
-          cvText = rawText.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s+/g, " ").trim();
-        }
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("profileId", activeProfile.id);
+      // save=1 → persist the parsed fields to user_profiles. Keeping the
+      // optimistic local form update too so the user can review & edit
+      // before the next save (parsing isn't perfect on niche layouts).
+      fd.append("save", "1");
+      fd.append("autofill", "1");
+
+      const res = await fetch("/api/cv/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to parse CV");
       }
-
-      if (cvText.length < 20) {
-        setMessage({ type: "error", text: "Could not extract text. Try .txt or .pdf." });
-        setCvParsing(false);
-        return;
-      }
-
-      const res = await fetch("/api/ai/profile-autofill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvText: cvText.slice(0, 8000) }),
-      });
-
-      if (!res.ok) throw new Error((await res.json()).error || "Failed to parse CV");
       const { profile } = await res.json();
 
+      if (!profile || profile.__error) {
+        throw new Error(profile?.__error || "CV parsed but no profile data extracted.");
+      }
+
+      // Merge with current form — keep the user's profile_name (it's their
+      // role tab name, not auto-generated), and only overwrite fields where
+      // we actually got a value back.
       setForm((prev) => ({
         profile_name: prev.profile_name,
         title: profile.position || prev.title,
         bio: profile.bio || prev.bio,
         skills: profile.skills?.length
-          ? [...new Set([...prev.skills, ...profile.skills.map((s: { name?: string } | string) => typeof s === "string" ? s : s.name || "")])]
+          ? Array.from(
+              new Set([
+                ...prev.skills,
+                ...profile.skills.map((s: { name?: string } | string) =>
+                  typeof s === "string" ? s : s.name || ""
+                ).filter(Boolean),
+              ])
+            )
           : prev.skills,
       }));
 
-      setMessage({ type: "success", text: `CV parsed from "${file.name}". Review and save.` });
+      // Re-fetch from server so the canonical work_experience / education we
+      // just persisted shows up on the next render.
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+
+      setMessage({ type: "success", text: `CV imported from "${file.name}". Review and save any final tweaks.` });
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "CV parse failed" });
     } finally {
