@@ -139,25 +139,27 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.8 0.18 75);
 
-  /* Dark mode orbs — deeper amber + a hint of teal so the background
-     reads as warm-cool gradient instead of just dim amber. Alpha bumped
-     slightly because dark bg eats the glow. screen blend on dark makes
-     the orbs look luminous rather than translucent. */
-  --orb-1: oklch(0.6 0.18 70 / 0.22);
-  --orb-2: oklch(0.55 0.14 30 / 0.22);
-  --orb-3: oklch(0.5 0.12 200 / 0.18);
+  /* Dark mode orbs — significantly bumped alphas and shifted hues
+     brighter. First pass with 18-22% alphas on a 0.14-lightness body bg
+     resulted in barely-perceptible glow ("FE arka planında bir efekt
+     görmüyorum"). Pushed hues toward 0.65-0.7 lightness and alphas to
+     0.40-0.50 so the orbs read as actual coloured spotlights against
+     the dark slate canvas. screen blend keeps them luminous rather
+     than translucent. */
+  --orb-1: oklch(0.7 0.20 70 / 0.45);
+  --orb-2: oklch(0.65 0.18 30 / 0.45);
+  --orb-3: oklch(0.62 0.16 220 / 0.40);
   --orb-blend: screen;
 
-  /* Dark aurora — cool indigo/violet → magenta → warm amber → teal.
-     The contrast between cool indigo and warm amber is what reads as
-     "alive" against the dark slate background; pure-amber would feel
-     flat. Lower opacity than light because mix-blend-mode: screen on
-     the orbs above already lifts the whole layer. */
-  --aurora-1: oklch(0.4 0.14 280);   /* indigo */
-  --aurora-2: oklch(0.45 0.16 320);  /* magenta */
-  --aurora-3: oklch(0.5 0.16 50);    /* warm amber */
-  --aurora-4: oklch(0.4 0.10 200);   /* teal */
-  --aurora-opacity: 0.28;
+  /* Dark aurora — shifted brighter (lightness 0.5-0.6 instead of 0.4)
+     and bumped opacity from 0.28 → 0.55. The cool↔warm hue rotation
+     stays the same. Now you can clearly see the colour field drift
+     through dark gaps in the page content. */
+  --aurora-1: oklch(0.55 0.18 280);  /* indigo */
+  --aurora-2: oklch(0.6 0.20 320);   /* magenta */
+  --aurora-3: oklch(0.65 0.20 50);   /* warm amber */
+  --aurora-4: oklch(0.5 0.14 200);   /* teal */
+  --aurora-opacity: 0.55;
 }
 
 @layer base {
