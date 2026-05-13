@@ -44,6 +44,7 @@ const NAV_SECTIONS = [
     label: "IMPROVE YOUR PROFILE",
     items: [
       { href: "/profile", label: "Profile", icon: User },
+      { href: "/cv-builder", label: "CV Builder", icon: FileText },
       { href: "/cv-review", label: "CV Review", icon: FileText },
       { href: "/linkedin-optimizer", label: "LinkedIn Optimizer", icon: Link2 },
       { href: "/coaching", label: "Coaching", icon: MessageCircle },
