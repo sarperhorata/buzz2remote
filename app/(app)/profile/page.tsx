@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import {
   Loader2, CheckCircle, Upload, Sparkles, Link2, Plus,
   Briefcase, GraduationCap, MapPin, X, AlertCircle, Star, Trash2, Crown,
+  FileText, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -40,6 +41,13 @@ export default function ProfilePage() {
   const [newSkill, setNewSkill] = useState("");
   const [cvParsing, setCvParsing] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  // LinkedIn import is two-flow: quick OAuth (basic fields) or full PDF
+  // upload (work history etc.). The modal exposes both paths because
+  // LinkedIn's API doesn't surface work history to third-party apps, and
+  // hiding that fact frustrates users who expect "Import from LinkedIn" to
+  // pull their whole profile.
+  const [linkedInModalOpen, setLinkedInModalOpen] = useState(false);
+  const [linkedInBusy, setLinkedInBusy] = useState(false);
 
   // Fetch all profiles
   const { data: profilesData, isLoading } = useQuery({
@@ -321,7 +329,12 @@ export default function ProfilePage() {
                 {cvParsing ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Upload className="size-3.5 mr-1.5" />}
                 {cvParsing ? "Parsing..." : "Upload CV"}
               </Button>
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => setLinkedInModalOpen(true)}
+              >
                 <Link2 className="size-3.5 mr-1.5 text-[#0077B5]" /> LinkedIn Import
               </Button>
             </div>
@@ -386,6 +399,231 @@ export default function ProfilePage() {
           </Button>
         </div>
       )}
+
+      {linkedInModalOpen && (
+        <LinkedInImportModal
+          onClose={() => setLinkedInModalOpen(false)}
+          activeProfileId={activeProfile?.id ?? null}
+          busy={linkedInBusy}
+          onBusyChange={setLinkedInBusy}
+          onComplete={(msg) => {
+            setMessage(msg);
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
+            setLinkedInModalOpen(false);
+          }}
+          fileInputRef={fileInputRef}
+          onLinkedInPdfImport={async (file) => {
+            // Reuses the same CV upload pipeline (server-side unpdf parse +
+            // profile-autofill). LinkedIn-exported PDFs are well-formed and
+            // parse cleanly — work history, education, skills, all of it.
+            if (!activeProfile) return;
+            setLinkedInBusy(true);
+            try {
+              const fd = new FormData();
+              fd.append("file", file);
+              fd.append("profileId", activeProfile.id);
+              fd.append("save", "1");
+              fd.append("autofill", "1");
+              const res = await fetch("/api/cv/upload", { method: "POST", body: fd });
+              if (!res.ok) throw new Error((await res.json()).error || "Failed to parse LinkedIn PDF");
+              const { profile } = await res.json();
+              if (!profile || profile.__error) throw new Error(profile?.__error || "No data extracted");
+              setForm((prev) => ({
+                profile_name: prev.profile_name,
+                title: profile.position || prev.title,
+                bio: profile.bio || prev.bio,
+                skills: profile.skills?.length
+                  ? Array.from(
+                      new Set([
+                        ...prev.skills,
+                        ...profile.skills.map((s: { name?: string } | string) =>
+                          typeof s === "string" ? s : s.name || ""
+                        ).filter(Boolean),
+                      ])
+                    )
+                  : prev.skills,
+              }));
+              queryClient.invalidateQueries({ queryKey: ["profiles"] });
+              setMessage({ type: "success", text: `LinkedIn PDF imported. Review your profile and save.` });
+              setLinkedInModalOpen(false);
+            } catch (err) {
+              setMessage({
+                type: "error",
+                text: err instanceof Error ? err.message : "LinkedIn PDF import failed",
+              });
+            } finally {
+              setLinkedInBusy(false);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// LinkedIn import modal
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Two paths because LinkedIn's API doesn't expose work history to anyone
+// outside the Marketing Partner Program (we aren't):
+//   1. Quick OAuth: name/email/picture/location only. One click if you're
+//      already signed in with LinkedIn, otherwise a redirect to the
+//      LinkedIn OAuth dance. The /api/users/linkedin-import route handles
+//      both cases and persists what it finds.
+//   2. Full PDF: user exports their profile from LinkedIn ("More" → "Save
+//      to PDF"), uploads here, and our existing /api/cv/upload pipeline
+//      parses the whole thing. This is the only realistic way to get
+//      complete work history into the platform.
+//
+// We surface the PDF flow visually first because it's the more useful
+// option — Quick OAuth gives you ~3 fields, PDF gives you everything.
+
+function LinkedInImportModal({
+  onClose,
+  activeProfileId,
+  busy,
+  onBusyChange,
+  onComplete,
+  onLinkedInPdfImport,
+}: {
+  onClose: () => void;
+  activeProfileId: string | null;
+  busy: boolean;
+  onBusyChange: (b: boolean) => void;
+  onComplete: (msg: { type: "success" | "error"; text: string }) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onLinkedInPdfImport: (file: File) => Promise<void>;
+}) {
+  const localFileRef = useRef<HTMLInputElement>(null);
+
+  async function handleQuickImport() {
+    if (!activeProfileId) {
+      onComplete({ type: "error", text: "Create a profile first." });
+      return;
+    }
+    onBusyChange(true);
+    try {
+      const res = await fetch("/api/users/linkedin-import", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        // Not-linked case: kick off the LinkedIn OAuth flow. After the
+        // round trip the user lands back on /profile and can click
+        // "Quick Import" again.
+        if (data.code === "not_linked") {
+          await signIn("linkedin", { callbackUrl: "/profile" });
+          return;
+        }
+        if (data.code === "token_expired") {
+          await signIn("linkedin", { callbackUrl: "/profile" });
+          return;
+        }
+        throw new Error(data.error || "LinkedIn import failed");
+      }
+      const fieldsLabel = (data.imported as string[] | undefined)?.length
+        ? data.imported.join(", ")
+        : "no new fields (already imported)";
+      onComplete({
+        type: "success",
+        text: `LinkedIn quick import done. Updated: ${fieldsLabel}.`,
+      });
+    } catch (err) {
+      onComplete({
+        type: "error",
+        text: err instanceof Error ? err.message : "LinkedIn import failed",
+      });
+    } finally {
+      onBusyChange(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="size-5 text-[#0077B5]" />
+            <h2 className="text-lg font-semibold">Import from LinkedIn</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+            <X className="size-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Full PDF flow — primary action */}
+          <div className="border-2 border-amber-400 bg-amber-50/50 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <FileText className="size-4 text-amber-600" />
+                <h3 className="font-semibold text-sm">Full profile from LinkedIn PDF</h3>
+              </div>
+              <span className="text-[10px] font-medium bg-amber-500 text-white px-2 py-0.5 rounded-full">RECOMMENDED</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+              Export your LinkedIn profile as PDF and upload it here. This is the only way to import your full work
+              experience, education, and skills — LinkedIn&apos;s API doesn&apos;t expose those fields to third-party apps.
+            </p>
+
+            <ol className="text-xs text-muted-foreground space-y-1 mb-3 list-decimal list-inside">
+              <li>
+                Open <a href="https://www.linkedin.com/in/me/" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline inline-flex items-center gap-0.5">
+                  your LinkedIn profile <ExternalLink className="size-3" />
+                </a>
+              </li>
+              <li>Click <strong>Resources</strong> → <strong>Save to PDF</strong></li>
+              <li>Upload the downloaded PDF below</li>
+            </ol>
+
+            <input
+              ref={localFileRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f) await onLinkedInPdfImport(f);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={busy}
+              onClick={() => localFileRef.current?.click()}
+            >
+              {busy ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Upload className="size-3.5 mr-1.5" />}
+              {busy ? "Parsing…" : "Upload LinkedIn PDF"}
+            </Button>
+          </div>
+
+          {/* Quick OAuth flow — secondary */}
+          <div className="border border-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="size-4 text-[#0077B5]" />
+              <h3 className="font-semibold text-sm">Quick: name & basics only</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+              One-click import via LinkedIn OAuth. Brings over your name, profile photo, and headline. Doesn&apos;t
+              include work history.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={busy}
+              onClick={handleQuickImport}
+            >
+              {busy ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Link2 className="size-3.5 mr-1.5 text-[#0077B5]" />}
+              {busy ? "Connecting…" : "Quick Import (OAuth)"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
