@@ -1,0 +1,46 @@
+import { cn } from "@/lib/utils";
+
+interface BeeIconProps {
+  className?: string;
+  size?: number;
+}
+
+export function BeeIcon({ className, size = 32 }: BeeIconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 40 40"
+      width={size}
+      height={size}
+      className={cn("shrink-0", className)}
+      fill="none"
+    >
+      {/* Body */}
+      <ellipse cx="20" cy="22" rx="10" ry="11" fill="#F59E0B"/>
+      {/* Stripes */}
+      <rect x="10" y="18" width="20" height="3" rx="1" fill="#1C1917"/>
+      <rect x="11" y="24" width="18" height="3" rx="1" fill="#1C1917"/>
+      {/* Head */}
+      <circle cx="20" cy="11" r="6" fill="#F59E0B"/>
+      <circle cx="20" cy="11" r="6" fill="#FBBF24" opacity="0.5"/>
+      {/* Eyes */}
+      <circle cx="17.5" cy="10.5" r="1.5" fill="#1C1917"/>
+      <circle cx="22.5" cy="10.5" r="1.5" fill="#1C1917"/>
+      {/* Eye shine */}
+      <circle cx="18" cy="10" r="0.5" fill="white"/>
+      <circle cx="23" cy="10" r="0.5" fill="white"/>
+      {/* Antenna */}
+      <path d="M17 6 Q14 2 12 3" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M23 6 Q26 2 28 3" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <circle cx="12" cy="3" r="1.5" fill="#F59E0B"/>
+      <circle cx="28" cy="3" r="1.5" fill="#F59E0B"/>
+      {/* Wings */}
+      <ellipse cx="11" cy="16" rx="6" ry="4" fill="white" opacity="0.6" transform="rotate(-15 11 16)"/>
+      <ellipse cx="29" cy="16" rx="6" ry="4" fill="white" opacity="0.6" transform="rotate(15 29 16)"/>
+      {/* Smile */}
+      <path d="M17 13 Q20 16 23 13" stroke="#1C1917" strokeWidth="1" strokeLinecap="round" fill="none"/>
+      {/* Stinger */}
+      <path d="M20 33 L18 36 L22 36 Z" fill="#D97706"/>
+    </svg>
+  );
+}

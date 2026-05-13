@@ -29,15 +29,25 @@ export async function POST(request: NextRequest) {
       const plan = session.metadata?.plan;
 
       if (userId && plan) {
+        // If a trial was started, set status to "trialing"; otherwise "active"
+        const hasTrial = session.subscription != null;
         await prisma.users.update({
           where: { id: userId },
           data: {
             stripe_subscription_id: session.subscription as string,
-            subscription_status: "active",
+            subscription_status: hasTrial ? "trialing" : "active",
             subscription_plan: plan,
           },
         });
       }
+      break;
+    }
+
+    case "customer.subscription.trial_will_end": {
+      const subscription = event.data.object;
+      const customer = await stripe.customers.retrieve(subscription.customer as string);
+      const userId = (customer as { metadata?: { userId?: string } }).metadata?.userId;
+      console.log(`Trial ending soon for userId=${userId}, subscription=${subscription.id}`);
       break;
     }
 

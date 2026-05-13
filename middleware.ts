@@ -1,5 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+// EDGE-SAFE middleware.
+//
+// Previous version imported `auth` from "@/lib/auth", which pulled the full
+// Auth.js machinery (providers, prisma, bcryptjs) into the edge runtime and
+// blew past the 1 MB compressed function size limit — deploys built fine and
+// then landed in "ERROR" state right after "onBuildComplete". To stay
+// edge-safe we instantiate NextAuth here with the minimal auth.config.ts and
+// use that wrapper.
+//
+// Next.js 16 deprecates the `middleware` convention in favor of `proxy.ts`.
+// We'll migrate later — the old convention still works with a warning.
+import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 const protectedPaths = [
   "/dashboard",
@@ -9,14 +23,30 @@ const protectedPaths = [
   "/settings",
   "/resume-upload",
   "/notifications",
+  "/coaching",
+  "/career-diagnosis",
+  "/cv-review",
+  "/linkedin-optimizer",
+  "/top-matches",
 ];
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+// Paths that are exempt from the onboarding redirect
+const onboardingExemptPrefixes = [
+  "/onboarding",
+  "/api",
+  "/payment",
+  "/_next",
+  "/favicon.ico",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
-  // Check JWT token (lightweight, no Prisma import)
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  const isLoggedIn = !!token;
+export default auth((request) => {
+  const { pathname } = request.nextUrl;
+  const session = request.auth;
+  const isLoggedIn = !!session?.user;
 
   // Protected routes
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
@@ -32,13 +62,24 @@ export async function middleware(request: NextRequest) {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (!token?.isAdmin) {
+    const user = session?.user as { isAdmin?: boolean } | undefined;
+    if (!user?.isAdmin) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
+  // Onboarding redirect: logged-in users who haven't completed onboarding
+  const user = session?.user as { onboardingCompleted?: boolean } | undefined;
+  if (
+    isLoggedIn &&
+    user?.onboardingCompleted === false &&
+    !onboardingExemptPrefixes.some((prefix) => pathname.startsWith(prefix))
+  ) {
+    return NextResponse.redirect(new URL("/onboarding", request.url));
+  }
+
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
@@ -50,5 +91,13 @@ export const config = {
     "/resume-upload/:path*",
     "/notifications/:path*",
     "/admin/:path*",
+    "/jobs/:path*",
+    "/companies/:path*",
+    "/coaching/:path*",
+    "/career-diagnosis/:path*",
+    "/cv-review/:path*",
+    "/linkedin-optimizer/:path*",
+    "/top-matches/:path*",
+    "/onboarding/:path*",
   ],
 };

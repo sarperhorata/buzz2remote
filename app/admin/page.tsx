@@ -3,6 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { StatCard } from "@/components/ui/stat-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Briefcase, Activity, Building2, FileText, Heart, Shield, BarChart3 } from "lucide-react";
 
 export default function AdminPage() {
   const { data: session } = useSession();
@@ -18,38 +21,36 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Admin Dashboard</h1>
+      <PageHeader title="Admin Dashboard" description="System overview and analytics" />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        {[
-          { label: "Total Jobs", value: stats?.totalJobs || 0, color: "blue" },
-          { label: "Active Jobs", value: stats?.activeJobs || 0, color: "green" },
-          { label: "Companies", value: stats?.totalCompanies || 0, color: "purple" },
-          { label: "Applications", value: stats?.totalApplications || 0, color: "orange" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stat.value.toLocaleString()}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Jobs" value={stats?.totalJobs?.toLocaleString() || "0"} icon={Briefcase} />
+        <StatCard label="Active Jobs" value={stats?.activeJobs?.toLocaleString() || "0"} icon={Activity} />
+        <StatCard label="Companies" value={stats?.totalCompanies?.toLocaleString() || "0"} icon={Building2} />
+        <StatCard label="Applications" value={stats?.totalApplications?.toLocaleString() || "0"} icon={FileText} />
       </div>
 
       {/* Job Type Distribution */}
       {stats?.jobTypeDistribution && (
-        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Job Type Distribution</h2>
-          <div className="space-y-2">
+        <div className="glass-card p-6 mb-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="gradient-primary rounded-xl p-2.5 text-white shadow-lg">
+              <BarChart3 className="size-5" />
+            </div>
+            <h2 className="text-lg font-semibold">Job Type Distribution</h2>
+          </div>
+          <div className="space-y-3">
             {stats.jobTypeDistribution.map((jt: { type: string; count: number }) => (
               <div key={jt.type} className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 dark:text-gray-400 w-32">{jt.type}</span>
-                <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-4">
+                <span className="text-sm text-muted-foreground w-32 shrink-0">{jt.type}</span>
+                <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-4 rounded-full"
+                    className="gradient-primary h-3 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, (jt.count / (stats.activeJobs || 1)) * 100)}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white w-12 text-right">{jt.count}</span>
+                <span className="text-sm font-medium w-12 text-right">{jt.count}</span>
               </div>
             ))}
           </div>
@@ -58,15 +59,24 @@ export default function AdminPage() {
 
       {/* Quick Links */}
       <div className="grid md:grid-cols-3 gap-4">
-        <a href="/api/health" target="_blank" rel="noreferrer" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center hover:shadow-md transition">
-          <p className="font-medium text-green-700 dark:text-green-300">Health Check</p>
-        </a>
-        <a href="/jobs" className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-center hover:shadow-md transition">
-          <p className="font-medium text-blue-700 dark:text-blue-300">Manage Jobs</p>
-        </a>
-        <a href="/companies" className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 text-center hover:shadow-md transition">
-          <p className="font-medium text-purple-700 dark:text-purple-300">Manage Companies</p>
-        </a>
+        {[
+          { href: "/api/health", label: "Health Check", icon: Heart, gradient: "from-emerald-500 to-teal-500", external: true },
+          { href: "/jobs", label: "Manage Jobs", icon: Briefcase, gradient: "from-violet-500 to-indigo-500", external: false },
+          { href: "/companies", label: "Manage Companies", icon: Building2, gradient: "from-rose-500 to-pink-500", external: false },
+        ].map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target={link.external ? "_blank" : undefined}
+            rel={link.external ? "noreferrer" : undefined}
+            className="glass-card p-5 hover-lift group text-center"
+          >
+            <div className={`w-10 h-10 mx-auto bg-gradient-to-br ${link.gradient} rounded-xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+              <link.icon className="size-5 text-white" />
+            </div>
+            <p className="font-medium text-sm">{link.label}</p>
+          </a>
+        ))}
       </div>
     </div>
   );

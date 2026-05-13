@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jobSearchSchema, jobCreateSchema } from "@/lib/validators/job";
 import { requireAdmin, handleApiError, parseSearchParams } from "@/lib/api-utils";
+import { auth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,8 +18,32 @@ export async function GET(request: NextRequest) {
 
     const { q, location, job_type, remote_type, experience_level, salary_min, salary_max, skills, page, limit, sort } = parsed.data;
 
+    // "Be first in line" embargo — applied SERVER-SIDE so pagination stays
+    // correct. Previously we filtered on the client which silently dropped
+    // entire pages of results (e.g. right after a fresh fetch the top 50
+    // jobs sorted by posted_date were all within 48h → free users saw an
+    // empty list while the counter said "3,584 total").
+    const session = await auth();
+    const plan = (session?.user as { subscriptionPlan?: string | null } | undefined)?.subscriptionPlan;
+    const isPro = plan === "pro" || plan === "premium";
+    const embargoCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { is_active: true, archived: false };
+
+    // Free users: hide jobs whose posted_date is within the embargo window.
+    // Jobs with null posted_date (source didn't track it) remain visible.
+    if (!isPro) {
+      where.AND = [
+        ...(where.AND ?? []),
+        {
+          OR: [
+            { posted_date: null },
+            { posted_date: { lt: embargoCutoff } },
+          ],
+        },
+      ];
+    }
 
     if (q) {
       where.OR = [
@@ -58,7 +83,9 @@ export async function GET(request: NextRequest) {
           remote_type: true,
           work_type: true,
           skills: true,
-          apply_url: true,
+          // SECURITY: apply_url is intentionally excluded from public responses.
+          // It's accessed only via the auth-gated /api/jobs/[id]/apply redirect.
+          // Jobgether leaks their apply URLs via GA payloads — we don't.
           posted_date: true,
           created_at: true,
           views_count: true,

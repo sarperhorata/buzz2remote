@@ -4,13 +4,14 @@ import { handleApiError } from "@/lib/api-utils";
 
 export async function GET() {
   try {
-    const [totalJobs, activeJobs, totalCompanies, totalApplications] =
+    const [totalJobs, activeJobs, totalApplications, uniqueCompaniesResult] =
       await Promise.all([
         prisma.jobs.count(),
         prisma.jobs.count({ where: { is_active: true, archived: false } }),
-        prisma.companies.count({ where: { is_active: true } }),
         prisma.user_applications.count(),
+        prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(DISTINCT company) as count FROM jobs WHERE is_active = true`,
       ]);
+    const totalCompanies = Number(uniqueCompaniesResult[0]?.count ?? 0);
 
     // Job type distribution
     const jobTypes = await prisma.jobs.groupBy({

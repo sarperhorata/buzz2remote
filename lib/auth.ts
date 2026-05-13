@@ -5,6 +5,30 @@ import LinkedIn from "next-auth/providers/linkedin";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/db";
 
+// Conditionally include OAuth providers only when their credentials are set.
+// Auth.js v5 throws "Configuration" if any provider is instantiated with
+// undefined clientId/clientSecret — which would break ALL providers including
+// Credentials. By gating these, the Credentials flow remains functional in
+// environments (preview, local dev) where OAuth isn't provisioned.
+const oauthProviders = [
+  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? [
+        Google({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        }),
+      ]
+    : []),
+  ...(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET
+    ? [
+        LinkedIn({
+          clientId: process.env.LINKEDIN_CLIENT_ID,
+          clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+        }),
+      ]
+    : []),
+];
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -36,14 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    LinkedIn({
-      clientId: process.env.LINKEDIN_CLIENT_ID!,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-    }),
+    ...oauthProviders,
   ],
   session: {
     strategy: "jwt",

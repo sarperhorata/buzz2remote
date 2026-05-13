@@ -4,8 +4,12 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -23,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.className} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white dark:bg-gray-950">
+    <html lang="en" className={cn(inter.variable, "antialiased")} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col bg-background text-foreground bg-gradient-mesh">
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>
