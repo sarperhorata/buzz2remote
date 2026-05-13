@@ -83,7 +83,7 @@ function sectionDecor(heading: string): { Icon: typeof Briefcase; accent: string
     case "About the Company":
       return { Icon: Building2, accent: "text-blue-600" };
     default:
-      return { Icon: Sparkles, accent: "text-gray-500" };
+      return { Icon: Sparkles, accent: "text-muted-foreground" };
   }
 }
 
@@ -105,12 +105,12 @@ function SectionBlock({ section }: { section: ParsedSection }) {
   const asList = shouldRenderAsList(section.content);
   return (
     <section className="mb-8">
-      <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-3">
+      <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-3">
         <Icon className={`size-5 ${accent}`} aria-hidden />
         {section.heading}
       </h2>
       {asList ? (
-        <ul className="space-y-2 text-gray-700 dark:text-gray-300 leading-relaxed list-disc list-outside ml-5">
+        <ul className="space-y-2 text-foreground dark:text-gray-300 leading-relaxed list-disc list-outside ml-5">
           {section.content.map((item, i) => (
             <li key={i} className="pl-1">
               {item}
@@ -118,7 +118,7 @@ function SectionBlock({ section }: { section: ParsedSection }) {
           ))}
         </ul>
       ) : (
-        <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="space-y-3 text-foreground dark:text-gray-300 leading-relaxed">
           {section.content.map((para, i) => (
             <p key={i}>{para}</p>
           ))}
@@ -147,7 +147,7 @@ function FilterTag({
   icon?: typeof MapPin;
 }) {
   const tones: Record<string, string> = {
-    neutral: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
+    neutral: "bg-muted/50 dark:bg-gray-700 text-foreground dark:text-gray-200",
     blue: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
     green: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300",
     purple: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300",
@@ -237,12 +237,12 @@ export default async function JobDetailPage({ params }: Props) {
         &larr; Back to Jobs
       </Link>
 
-      <article className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8">
+      <article className="bg-card dark:bg-gray-800 rounded-2xl border border-border dark:border-gray-700 p-6 md:p-8">
         {/* Header */}
         <header className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground dark:text-white">
                 {job.title}
               </h1>
               {showLangBadge && (
@@ -255,9 +255,9 @@ export default async function JobDetailPage({ params }: Props) {
                 </span>
               )}
             </div>
-            <p className="text-lg text-gray-600 dark:text-gray-400">{job.company}</p>
+            <p className="text-lg text-muted-foreground dark:text-muted-foreground/70">{job.company}</p>
             {/* Posted date · views · applied */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground dark:text-muted-foreground/70">
               {posted && (
                 <span className="inline-flex items-center gap-1">
                   <Clock className="size-3.5" aria-hidden />
@@ -344,25 +344,25 @@ export default async function JobDetailPage({ params }: Props) {
               <div className="text-2xl leading-none">💡</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-gray-900 dark:text-white">
+                  <p className="font-semibold text-foreground dark:text-white">
                     Estimated salary:{" "}
                     <span className="text-amber-700 dark:text-amber-300">
                       {formatSalaryShort(salaryEstimate.min, salaryEstimate.currency)}
                       {" – "}
                       {formatSalaryShort(salaryEstimate.max, salaryEstimate.currency)}
                     </span>{" "}
-                    <span className="text-gray-500 dark:text-gray-400 font-normal text-sm">
+                    <span className="text-muted-foreground dark:text-muted-foreground/70 font-normal text-sm">
                       {salaryEstimate.currency}/yr
                     </span>
                   </p>
                   <span
                     title="This is an estimate computed from similar jobs in our database, not from the employer."
-                    className="inline-flex items-center text-gray-400 dark:text-gray-500 cursor-help"
+                    className="inline-flex items-center text-muted-foreground/70 dark:text-muted-foreground cursor-help"
                   >
                     <Info className="size-4" aria-hidden />
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground/70 mt-1">
                   Based on {salaryEstimate.sampleSize} similar{" "}
                   <span className="font-medium">{category}</span> jobs · median{" "}
                   {formatSalaryShort(salaryEstimate.median, salaryEstimate.currency)}
@@ -375,7 +375,7 @@ export default async function JobDetailPage({ params }: Props) {
         {/* Skills */}
         {skills.length > 0 && (
           <section className="mb-8">
-            <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-3">
               <Wrench className="size-5 text-amber-600" aria-hidden />
               Skills
             </h2>
@@ -396,12 +396,12 @@ export default async function JobDetailPage({ params }: Props) {
           // single Overview section, so an empty array here means truly empty.)
           job.description && (
             <section className="mb-8">
-              <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                <Sparkles className="size-5 text-gray-500" aria-hidden />
+              <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-3">
+                <Sparkles className="size-5 text-muted-foreground" aria-hidden />
                 Overview
               </h2>
               <div
-                className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
+                className="prose dark:prose-invert max-w-none text-foreground dark:text-gray-300"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
             </section>
@@ -414,24 +414,24 @@ export default async function JobDetailPage({ params }: Props) {
         {job.requirements &&
           !parsed.sections.some((s) => s.heading === "Requirements") && (
             <section className="mb-8">
-              <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-3">
                 <CheckCircle className="size-5 text-emerald-600" aria-hidden />
                 Requirements
               </h2>
               <div
-                className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
+                className="prose dark:prose-invert max-w-none text-foreground dark:text-gray-300"
                 dangerouslySetInnerHTML={{ __html: job.requirements }}
               />
             </section>
           )}
         {job.benefits && !parsed.sections.some((s) => s.heading === "Benefits") && (
           <section className="mb-8">
-            <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-3">
               <Gift className="size-5 text-pink-600" aria-hidden />
               Benefits
             </h2>
             <div
-              className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
+              className="prose dark:prose-invert max-w-none text-foreground dark:text-gray-300"
               dangerouslySetInnerHTML={{ __html: job.benefits }}
             />
           </section>
@@ -454,8 +454,8 @@ export default async function JobDetailPage({ params }: Props) {
 
       {/* Similar jobs */}
       {similarJobs.length > 0 && (
-        <aside className="mt-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <aside className="mt-8 bg-card dark:bg-gray-800 rounded-2xl border border-border dark:border-gray-700 p-6">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground dark:text-white mb-4">
             <Sparkles className="size-5 text-amber-600" aria-hidden />
             Similar jobs
           </h2>
@@ -464,12 +464,12 @@ export default async function JobDetailPage({ params }: Props) {
               <li key={sj.id} className="py-3 first:pt-0 last:pb-0">
                 <Link
                   href={`/jobs/${sj.id}`}
-                  className="block hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded-md transition-colors"
+                  className="block hover:bg-muted/30 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded-md transition-colors"
                 >
-                  <p className="font-medium text-gray-900 dark:text-white truncate">
+                  <p className="font-medium text-foreground dark:text-white truncate">
                     {sj.title}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-sm text-muted-foreground dark:text-muted-foreground/70 truncate">
                     {sj.company}
                     {sj.location ? ` · ${sj.location}` : ""}
                   </p>

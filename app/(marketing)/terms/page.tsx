@@ -31,9 +31,9 @@ const SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <div className="bg-white">
+    <div className="bg-card">
       {/* Header */}
-      <section className="border-b border-border bg-gray-50">
+      <section className="border-b border-border bg-muted/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <Link href="/" className="hover:text-foreground">Home</Link>

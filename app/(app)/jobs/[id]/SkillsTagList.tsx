@@ -41,7 +41,7 @@ export function SkillsTagList({ skills }: Props) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-1 rounded-full text-sm transition-colors cursor-pointer"
+          className="border border-dashed border-border dark:border-gray-600 text-muted-foreground dark:text-gray-300 hover:bg-muted/50 dark:hover:bg-gray-700 px-3 py-1 rounded-full text-sm transition-colors cursor-pointer"
         >
           {expanded ? "Show less" : `+${hiddenCount} more`}
         </button>

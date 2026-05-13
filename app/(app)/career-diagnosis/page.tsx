@@ -48,8 +48,8 @@ function ScoreCard({ label, score }: { label: string; score: number }) {
   return (
     <div className={`flex flex-col items-center p-6 rounded-xl border-2 ${scoreBg(score)}`}>
       <div className={`text-4xl font-bold ${scoreColor(score)}`}>{score}</div>
-      <div className="text-xs text-gray-500 mt-1">/100</div>
-      <div className="text-sm font-medium text-gray-700 mt-2 text-center">{label}</div>
+      <div className="text-xs text-muted-foreground mt-1">/100</div>
+      <div className="text-sm font-medium text-foreground mt-2 text-center">{label}</div>
     </div>
   );
 }
@@ -58,9 +58,9 @@ function LoadingState() {
   return (
     <div className="max-w-2xl mx-auto mt-12 space-y-6">
       <div className="text-center">
-        <div className="text-lg font-semibold text-gray-800 animate-pulse">Analyzing your profile...</div>
+        <div className="text-lg font-semibold text-foreground animate-pulse">Analyzing your profile...</div>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div className="bg-card rounded-xl border border-border p-6 space-y-4">
         {[
           { label: "Reading your profile", done: true },
           { label: "Analyzing your skills", done: true },
@@ -72,12 +72,12 @@ function LoadingState() {
             ) : (
               <span className="text-amber-500 text-lg animate-pulse">⏳</span>
             )}
-            <span className={`text-sm ${step.done ? "text-gray-600" : "text-gray-800 font-medium animate-pulse"}`}>
+            <span className={`text-sm ${step.done ? "text-muted-foreground" : "text-foreground font-medium animate-pulse"}`}>
               {step.label}
             </span>
           </div>
         ))}
-        <div className="mt-4 h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div className="mt-4 h-2 rounded-full bg-muted/50 overflow-hidden">
           <div className="h-full bg-amber-400 animate-pulse w-2/3 rounded-full" />
         </div>
       </div>
@@ -114,12 +114,12 @@ export default function CareerDiagnosisPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-muted/30 py-10 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Career Diagnosis</h1>
-          <p className="text-gray-500 mt-1">AI-powered analysis of your career readiness</p>
+          <h1 className="text-3xl font-bold text-foreground">Career Diagnosis</h1>
+          <p className="text-muted-foreground mt-1">AI-powered analysis of your career readiness</p>
         </div>
 
         {/* Error */}
@@ -134,10 +134,10 @@ export default function CareerDiagnosisPage() {
 
         {/* Initial state */}
         {!isLoading && !diagnosis && (
-          <div className="bg-white rounded-xl border border-gray-200 p-10 text-center max-w-lg mx-auto">
+          <div className="bg-card rounded-xl border border-border p-10 text-center max-w-lg mx-auto">
             <div className="text-4xl mb-4">🔍</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Get Your Career Diagnosis</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">Get Your Career Diagnosis</h2>
+            <p className="text-muted-foreground text-sm mb-6">
               Our AI analyzes your profile, experience, and skills to give you a personalized roadmap.
             </p>
             <button
@@ -146,7 +146,7 @@ export default function CareerDiagnosisPage() {
             >
               Analyze My Profile
             </button>
-            <p className="text-xs text-gray-400 mt-4">Takes ~10 seconds</p>
+            <p className="text-xs text-muted-foreground/70 mt-4">Takes ~10 seconds</p>
           </div>
         )}
 
@@ -162,7 +162,7 @@ export default function CareerDiagnosisPage() {
               >
                 {diagnosis.readiness_level}
               </span>
-              <span className="text-sm text-gray-500">Readiness Level</span>
+              <span className="text-sm text-muted-foreground">Readiness Level</span>
             </div>
 
             {/* Score cards */}
@@ -177,11 +177,11 @@ export default function CareerDiagnosisPage() {
               {/* Left column */}
               <div className="space-y-4">
                 {/* Strengths */}
-                <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-green-500 p-5">
-                  <h3 className="font-semibold text-gray-900 mb-3">💪 Strengths</h3>
+                <div className="bg-card rounded-xl border border-border border-l-4 border-l-green-500 p-5">
+                  <h3 className="font-semibold text-foreground mb-3">💪 Strengths</h3>
                   <ul className="space-y-2">
                     {diagnosis.strengths.map((s, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex gap-2">
+                      <li key={i} className="text-sm text-muted-foreground flex gap-2">
                         <span className="text-green-500 mt-0.5 shrink-0">•</span>
                         {s}
                       </li>
@@ -191,10 +191,10 @@ export default function CareerDiagnosisPage() {
 
                 {/* Quick wins */}
                 <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
-                  <h3 className="font-semibold text-gray-900 mb-3">⚡ Quick Wins This Week</h3>
+                  <h3 className="font-semibold text-foreground mb-3">⚡ Quick Wins This Week</h3>
                   <ul className="space-y-2">
                     {diagnosis.quick_wins.map((w, i) => (
-                      <li key={i} className="text-sm text-gray-700 flex gap-2">
+                      <li key={i} className="text-sm text-foreground flex gap-2">
                         <span className="text-amber-500 font-bold shrink-0">{i + 1}.</span>
                         {w}
                       </li>
@@ -206,11 +206,11 @@ export default function CareerDiagnosisPage() {
               {/* Right column */}
               <div className="space-y-4">
                 {/* Gaps */}
-                <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-400 p-5">
-                  <h3 className="font-semibold text-gray-900 mb-3">🎯 Gaps to Address</h3>
+                <div className="bg-card rounded-xl border border-border border-l-4 border-l-red-400 p-5">
+                  <h3 className="font-semibold text-foreground mb-3">🎯 Gaps to Address</h3>
                   <ul className="space-y-2">
                     {diagnosis.gaps.map((g, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex gap-2">
+                      <li key={i} className="text-sm text-muted-foreground flex gap-2">
                         <span className="text-red-400 mt-0.5 shrink-0">•</span>
                         {g}
                       </li>
@@ -219,11 +219,11 @@ export default function CareerDiagnosisPage() {
                 </div>
 
                 {/* Long-term actions */}
-                <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-blue-400 p-5">
-                  <h3 className="font-semibold text-gray-900 mb-3">🗺️ Long-term Strategy</h3>
+                <div className="bg-card rounded-xl border border-border border-l-4 border-l-blue-400 p-5">
+                  <h3 className="font-semibold text-foreground mb-3">🗺️ Long-term Strategy</h3>
                   <ul className="space-y-2">
                     {diagnosis.long_term_actions.map((a, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex gap-2">
+                      <li key={i} className="text-sm text-muted-foreground flex gap-2">
                         <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
                         {a}
                       </li>
@@ -236,8 +236,8 @@ export default function CareerDiagnosisPage() {
             {/* Bottom row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Top job categories */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">Top Job Categories</h3>
+              <div className="bg-card rounded-xl border border-border p-5">
+                <h3 className="font-semibold text-foreground mb-3">Top Job Categories</h3>
                 <div className="flex flex-wrap gap-2">
                   {diagnosis.top_job_categories.map((cat, i) => (
                     <span
@@ -251,13 +251,13 @@ export default function CareerDiagnosisPage() {
               </div>
 
               {/* Salary range */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">Estimated Salary Range</h3>
-                <div className="text-2xl font-bold text-gray-800">
+              <div className="bg-card rounded-xl border border-border p-5">
+                <h3 className="font-semibold text-foreground mb-3">Estimated Salary Range</h3>
+                <div className="text-2xl font-bold text-foreground">
                   ${diagnosis.salary_range.min.toLocaleString()} – ${diagnosis.salary_range.max.toLocaleString()}
-                  <span className="text-sm font-normal text-gray-500 ml-2">{diagnosis.salary_range.currency}</span>
+                  <span className="text-sm font-normal text-muted-foreground ml-2">{diagnosis.salary_range.currency}</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Based on your skills and experience</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Based on your skills and experience</p>
               </div>
             </div>
 
@@ -265,7 +265,7 @@ export default function CareerDiagnosisPage() {
             <div className="flex gap-3 pt-2">
               <Link
                 href="/profile"
-                className="bg-white border border-gray-300 text-gray-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="bg-card border border-border text-foreground font-medium px-5 py-2.5 rounded-lg hover:bg-muted/30 transition-colors text-sm"
               >
                 Update Your Profile
               </Link>

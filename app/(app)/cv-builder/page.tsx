@@ -199,7 +199,7 @@ export default function CVBuilderPage() {
               key={id}
               onClick={() => setTemplate(id)}
               className={`text-left rounded-xl border-2 p-4 transition-all ${
-                active ? "border-amber-500 bg-amber-50" : "border-border bg-white hover:border-amber-300 hover:bg-amber-50/30"
+                active ? "border-amber-500 bg-amber-50" : "border-border bg-card hover:border-amber-300 hover:bg-amber-50/30"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -235,7 +235,7 @@ export default function CVBuilderPage() {
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-border rounded-xl p-5">
+    <div className="bg-card border border-border rounded-xl p-5">
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h2>
         {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
@@ -501,7 +501,7 @@ function ExperienceCard({ value, onChange, onRemove }: {
   onRemove: () => void;
 }) {
   return (
-    <div className="border border-border rounded-lg p-3 bg-gray-50/50 space-y-2.5 relative">
+    <div className="border border-border rounded-lg p-3 bg-muted/30/50 space-y-2.5 relative">
       <button onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
         <Trash2 className="size-3.5" />
       </button>
@@ -555,7 +555,7 @@ function EducationCard({ value, onChange, onRemove }: {
   onRemove: () => void;
 }) {
   return (
-    <div className="border border-border rounded-lg p-3 bg-gray-50/50 space-y-2.5 relative">
+    <div className="border border-border rounded-lg p-3 bg-muted/30/50 space-y-2.5 relative">
       <button onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
         <Trash2 className="size-3.5" />
       </button>
@@ -640,8 +640,8 @@ function PreviewPanel({ form, template }: { form: CVData; template: TemplateId }
   const preview = useMemo(() => <PreviewBody form={form} template={template} />, [form, template]);
 
   return (
-    <div className="bg-white border border-border rounded-xl overflow-hidden">
-      <div className="border-b border-border bg-gray-50 px-4 py-2.5 flex items-center justify-between">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="border-b border-border bg-muted/30 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full" style={{ backgroundColor: meta.accent }} />
           <span className="text-xs font-medium">{meta.name} preview</span>
@@ -649,8 +649,8 @@ function PreviewPanel({ form, template }: { form: CVData; template: TemplateId }
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">A4</span>
       </div>
       {/* Aspect ratio 1:1.414 = A4 portrait. Constrained width, content scrolls if too tall. */}
-      <div className="relative bg-gray-100 p-4">
-        <div className="bg-white border border-border shadow-sm mx-auto" style={{ width: "100%", aspectRatio: "1 / 1.414" }}>
+      <div className="relative bg-muted/50 p-4">
+        <div className="bg-card border border-border shadow-sm mx-auto" style={{ width: "100%", aspectRatio: "1 / 1.414" }}>
           <div className="size-full overflow-y-auto">
             {preview}
           </div>
@@ -759,8 +759,8 @@ function PreviewClassic({ form }: { form: CVData }) {
   return (
     <div className="h-full p-6 text-[10px] leading-snug" style={{ fontFamily: "Times, 'Times New Roman', serif" }}>
       {form.full_name && <div className="text-center text-xl font-bold tracking-wide">{form.full_name}</div>}
-      {form.position && <div className="text-center text-[10px] text-gray-600 mb-1">{form.position}</div>}
-      <div className="text-center text-[9px] text-gray-600 mb-3">
+      {form.position && <div className="text-center text-[10px] text-muted-foreground mb-1">{form.position}</div>}
+      <div className="text-center text-[9px] text-muted-foreground mb-3">
         {[form.email, form.phone, form.location].filter(Boolean).join(" · ")}
       </div>
       {form.bio && (
@@ -776,7 +776,7 @@ function PreviewClassic({ form }: { form: CVData }) {
             <div key={i} className="mb-2">
               <div className="flex justify-between items-baseline">
                 <span className="text-[10px] font-bold">{w.title}{w.company ? `, ${w.company}` : ""}</span>
-                <span className="text-[9px] italic text-gray-600">{formatRange(w.start_date, w.end_date, w.is_current)}</span>
+                <span className="text-[9px] italic text-muted-foreground">{formatRange(w.start_date, w.end_date, w.is_current)}</span>
               </div>
               {w.location && <div className="text-[10px] italic">{w.location}</div>}
               {w.description && <div className="text-[10px]">{w.description}</div>}
@@ -791,7 +791,7 @@ function PreviewClassic({ form }: { form: CVData }) {
             <div key={i} className="mb-1.5">
               <div className="flex justify-between items-baseline">
                 <span className="text-[10px] font-bold">{e.degree}{e.field ? `, ${e.field}` : ""}{e.school ? `, ${e.school}` : ""}</span>
-                <span className="text-[9px] italic text-gray-600">{formatRange(e.start_date, e.end_date)}</span>
+                <span className="text-[9px] italic text-muted-foreground">{formatRange(e.start_date, e.end_date)}</span>
               </div>
             </div>
           ))}
@@ -811,20 +811,20 @@ function PreviewMinimal({ form }: { form: CVData }) {
   return (
     <div className="h-full p-6 text-[10px] leading-relaxed">
       {form.full_name && <div className="text-2xl font-bold tracking-tight leading-tight">{form.full_name}</div>}
-      {form.position && <div className="text-[11px] text-gray-500 mb-3">{form.position}</div>}
-      <div className="text-[9px] text-gray-500 mb-5">
+      {form.position && <div className="text-[11px] text-muted-foreground mb-3">{form.position}</div>}
+      <div className="text-[9px] text-muted-foreground mb-5">
         {[form.email, form.phone, form.location].filter(Boolean).join("  ·  ")}
       </div>
       {form.bio && <div className="text-[10px] mb-5 leading-relaxed">{form.bio}</div>}
       {form.work_experience && form.work_experience.length > 0 && (
         <>
-          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Experience</div>
+          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2">Experience</div>
           {form.work_experience.map((w, i) => (
             <div key={i} className="flex mb-3">
-              <div className="w-16 text-[8px] text-gray-500">{formatRange(w.start_date, w.end_date, w.is_current)}</div>
+              <div className="w-16 text-[8px] text-muted-foreground">{formatRange(w.start_date, w.end_date, w.is_current)}</div>
               <div className="flex-1">
                 <div className="text-[10px] font-bold">{w.title}</div>
-                {(w.company || w.location) && <div className="text-[9px] text-gray-500">{w.company}{w.company && w.location ? " · " : ""}{w.location}</div>}
+                {(w.company || w.location) && <div className="text-[9px] text-muted-foreground">{w.company}{w.company && w.location ? " · " : ""}{w.location}</div>}
                 {w.description && <div className="text-[9px]">{w.description}</div>}
               </div>
             </div>
@@ -833,13 +833,13 @@ function PreviewMinimal({ form }: { form: CVData }) {
       )}
       {form.education && form.education.length > 0 && (
         <>
-          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2 mt-3">Education</div>
+          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 mt-3">Education</div>
           {form.education.map((e, i) => (
             <div key={i} className="flex mb-2">
-              <div className="w-16 text-[8px] text-gray-500">{formatRange(e.start_date, e.end_date)}</div>
+              <div className="w-16 text-[8px] text-muted-foreground">{formatRange(e.start_date, e.end_date)}</div>
               <div className="flex-1">
                 <div className="text-[10px] font-bold">{e.degree}{e.field ? `, ${e.field}` : ""}</div>
-                {e.school && <div className="text-[9px] text-gray-500">{e.school}</div>}
+                {e.school && <div className="text-[9px] text-muted-foreground">{e.school}</div>}
               </div>
             </div>
           ))}

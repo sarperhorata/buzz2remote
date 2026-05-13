@@ -540,7 +540,7 @@ function LinkedInImportModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-5 border-b border-border flex items-center justify-between">
@@ -548,7 +548,7 @@ function LinkedInImportModal({
             <Link2 className="size-5 text-[#0077B5]" />
             <h2 className="text-lg font-semibold">Import from LinkedIn</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-muted/50 rounded">
             <X className="size-4 text-muted-foreground" />
           </button>
         </div>

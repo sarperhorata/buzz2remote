@@ -93,7 +93,7 @@ export default function Home() {
   return (
     <div className="bg-background">
       {/* Hero Section */}
-      <section className="bg-white pt-20 pb-16 md:pt-28 md:pb-20">
+      <section className="pt-20 pb-16 md:pt-28 md:pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-full px-4 py-1.5 text-sm font-medium mb-8">
@@ -121,7 +121,7 @@ export default function Home() {
 
           {/* Search Form */}
           <form onSubmit={handleSearch} className="max-w-xl mx-auto mb-8">
-            <div className="flex items-center bg-white border border-border rounded-xl shadow-sm p-1.5 gap-2">
+            <div className="flex items-center bg-card border border-border rounded-xl shadow-sm p-1.5 gap-2">
               <div className="flex items-center flex-1 px-3 gap-2">
                 <Search className="size-5 text-muted-foreground shrink-0" />
                 <input
@@ -158,7 +158,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-t border-b border-border py-8 bg-white">
+      <section className="border-t border-b border-border py-8 bg-background/60 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 divide-x divide-border">
             {[
@@ -212,7 +212,7 @@ export default function Home() {
           {recentJobs.length === 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white border border-border rounded-xl shadow-sm p-5 animate-pulse">
+                <div key={i} className="bg-card border border-border rounded-xl shadow-sm p-5 animate-pulse">
                   <div className="h-4 bg-muted rounded w-3/4 mb-3" />
                   <div className="h-3 bg-muted rounded w-1/2 mb-4" />
                   <div className="h-3 bg-muted rounded w-full" />
@@ -229,7 +229,7 @@ export default function Home() {
                   <Link
                     key={job.id}
                     href={`/jobs/${job.id}`}
-                    className="bg-white border border-border rounded-xl shadow-sm p-5 hover:shadow-md hover:border-amber-200 transition-all group block"
+                    className="bg-card border border-border rounded-xl shadow-sm p-5 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-400/50 transition-all group block"
                   >
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
@@ -289,7 +289,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 md:py-24 bg-gray-50">
+      <section className="py-20 md:py-24 bg-muted/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
@@ -324,7 +324,7 @@ export default function Home() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="bg-white border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="bg-amber-50 rounded-lg p-2.5 w-10 h-10 flex items-center justify-center mb-4">
                   <feature.icon className="size-5 text-amber-600" />
@@ -338,7 +338,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 md:py-24 bg-white">
+      <section className="py-20 md:py-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">

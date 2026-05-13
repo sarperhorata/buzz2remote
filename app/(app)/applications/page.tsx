@@ -91,7 +91,7 @@ function CompanyAvatar({ company }: { company: string }) {
     <img
       src={getCompanyLogoUrl(company)}
       alt={company}
-      className="size-9 shrink-0 rounded-md object-contain bg-white border"
+      className="size-9 shrink-0 rounded-md object-contain bg-card border"
       onError={() => setErrored(true)}
     />
   );
@@ -102,7 +102,7 @@ function JobCard({ item, dateLabel }: { item: KanbanItem; dateLabel: "Clicked" |
   const dateIso = dateLabel === "Applied" ? item.appliedAt : item.clickedAt ?? item.appliedAt;
 
   return (
-    <div className="group relative rounded-lg border bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
+    <div className="group relative rounded-lg border bg-card p-3 shadow-sm hover:shadow-md transition-shadow">
       <Link href={`/jobs/${item.id}`} className="block">
         <div className="flex items-start gap-3">
           <CompanyAvatar company={item.company} />
@@ -139,7 +139,7 @@ function JobCard({ item, dateLabel }: { item: KanbanItem; dateLabel: "Clicked" |
       <div className="absolute top-2 right-2">
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="rounded p-1 hover:bg-gray-100 text-muted-foreground"
+            className="rounded p-1 hover:bg-muted/50 text-muted-foreground"
             onClick={(e) => e.stopPropagation()}
             aria-label="More options"
           >
@@ -185,7 +185,7 @@ function ColumnHeader({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-white text-slate-800 text-xs font-semibold">
+      <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-card text-slate-800 text-xs font-semibold">
         {count}
       </span>
     </div>
@@ -282,7 +282,7 @@ export default function ApplicationsPage() {
                 tooltip={col.tooltip}
                 headerClass={col.headerClass}
               />
-              <div className="flex-1 bg-gray-100/50 rounded-b-xl p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="flex-1 bg-muted/50/50 rounded-b-xl p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {isLoading ? (
                   <ColumnSkeleton />
                 ) : items.length === 0 ? (
