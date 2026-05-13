@@ -30,12 +30,21 @@
 export default function AnimatedBackground() {
   return (
     <div className="animated-bg" aria-hidden="true">
+      {/*
+        Layer stack, back to front:
+          1. .aurora  — slow-rotating conic gradient ("northern lights")
+          2. .orb x3  — drifting blurry circles
+          3. .grain   — static dot grid (was already here)
+          4. .noise   — SVG turbulence overlay for film-grain texture
+        All four are pure CSS (the SVG turbulence is computed once and
+        cached as a data URI). 0 bytes JS, ~3.5 KB total CSS+SVG.
+      */}
+      <div className="aurora" />
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
-      {/* Subtle dot grid layered above the orbs — adds a "depth" feel
-          without obscuring content. CSS-only via radial-gradient. */}
       <div className="grain" />
+      <div className="noise" />
     </div>
   );
 }
