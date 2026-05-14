@@ -12,6 +12,13 @@ import { breezy } from "./breezy";
 import { freshteam } from "./freshteam";
 import { smartrecruiters } from "./smartrecruiters-source";
 import { recruitee } from "./recruitee-source";
+import { personio } from "./personio";
+import { bamboohr } from "./bamboohr";
+// pinpointhq + teamtailor are skeleton-only (require API keys or JS
+// rendering); their fetch() returns [] until enabled. Imported for type
+// completeness but NOT added to allSources yet.
+// import { pinpointhq } from "./pinpointhq";
+// import { teamtailor } from "./teamtailor";
 
 export type { RawJob, JobSource };
 
@@ -22,7 +29,8 @@ export const allSources: JobSource[] = [
   remotive,
   arbeitnow,
   himalayas,
-  // ATS platforms (58+67+14+19+22+30+5+4 = 219 company career pages)
+  // ATS platforms — 261 unique company career pages across 10 ATS providers
+  // (after +39 embedded-ATS-detection slugs and +8 new BambooHR/Personio).
   greenhouse,
   lever,
   ashby,
@@ -31,6 +39,8 @@ export const allSources: JobSource[] = [
   freshteam,
   smartrecruiters,
   recruitee,
+  personio,
+  bamboohr,
 ];
 
 export interface FetchResult {
