@@ -107,7 +107,7 @@ function JobCard({ item, dateLabel }: { item: KanbanItem; dateLabel: "Clicked" |
         <div className="flex items-start gap-3">
           <CompanyAvatar company={item.company} />
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug pr-6">
+            <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug pr-6">
               {item.title}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.company}</p>
@@ -225,7 +225,12 @@ const COLUMNS: ColumnConfig[] = [
     key: "likes",
     title: "Likes",
     tooltip: "Jobs you liked but haven't applied to yet.",
-    headerClass: "bg-slate-800 text-white",
+    // In light mode: dark-to-light progression from Likes → Expired feels
+    // like "fading interest". In dark mode that flips — slate-400/500
+    // become BRIGHTER than the page bg and punch out as washed-out panels.
+    // Use darker variants in dark mode so the gradient still works
+    // visually (now subtle steps within the dark range).
+    headerClass: "bg-slate-800 dark:bg-slate-600 text-white",
     dateLabel: "Liked",
     emptyIcon: Heart,
   },
@@ -233,7 +238,7 @@ const COLUMNS: ColumnConfig[] = [
     key: "applyClicks",
     title: "Apply Clicks",
     tooltip: "Jobs where you clicked 'Apply'. Mark them as applied once submitted.",
-    headerClass: "bg-slate-700 text-white",
+    headerClass: "bg-slate-700 dark:bg-slate-700 text-white",
     dateLabel: "Clicked",
     emptyIcon: MousePointerClick,
   },
@@ -241,7 +246,7 @@ const COLUMNS: ColumnConfig[] = [
     key: "applied",
     title: "Applied",
     tooltip: "Applications you've confirmed as submitted, or that have a response.",
-    headerClass: "bg-slate-500 text-white",
+    headerClass: "bg-slate-500 dark:bg-slate-800 text-white",
     dateLabel: "Applied",
     emptyIcon: CheckCircle2,
   },
@@ -249,7 +254,7 @@ const COLUMNS: ColumnConfig[] = [
     key: "expired",
     title: "Expired",
     tooltip: "Jobs that are no longer active.",
-    headerClass: "bg-slate-400 text-white",
+    headerClass: "bg-slate-400 dark:bg-slate-900 dark:border dark:border-slate-700 text-white",
     dateLabel: "Expired",
     emptyIcon: Archive,
   },

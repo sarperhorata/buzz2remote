@@ -405,31 +405,15 @@ function parseSectionContent(body: string): string[] {
     }
   }
 
-  // Heuristic B — single fat line that's actually a flattened list:
-  //   QA flagged this on a Yoffix posting where Requirements rendered as
-  //   "Strong Practical Experience With React TypeScript Node.js Modern
-  //    frontend architecture API design and backend development …".
-  //   The source HTML lost both bullets AND line breaks before reaching
-  //   us, so we can't recover via normal splitting. Detect the pattern
-  //   (one long line with many TitleCase phrase starts) and split at
-  //   "lowercase end → space → Capital start" boundaries.
-  //   This over-splits proper nouns occasionally, but bullets-with-extra-
-  //   splits read FAR better than a 400-char unbroken paragraph.
-  if (rawLines.length === 1 && rawLines[0].length > 80) {
-    const line = rawLines[0];
-    // Count " Capital" runs as a cheap "is this a flattened list" probe.
-    const capRuns = (line.match(/\s[A-Z][a-zA-Z0-9]+/g) || []).length;
-    if (capRuns >= 5) {
-      // Split when a lowercase/digit ends a token AND the next token
-      // starts with Capital followed by ≥ 2 lowercase chars. Avoids
-      // splitting acronyms (CI/CD, R&D, UX/UI stay whole).
-      const phrases = line
-        .split(/(?<=[a-z0-9.)\]])\s+(?=[A-Z][a-zA-Z]{2,})/)
-        .map((p) => p.trim())
-        .filter((p) => p.length > 2);
-      if (phrases.length >= 3) return phrases;
-    }
-  }
+  // (Removed the previous "Heuristic B" — capital-letter-boundary splitter
+  // for single-line flattened lists. It split *every* lowercase→Capital
+  // transition, which made phrases like "Strong Practical Experience" into
+  // three separate bullets ["Strong", "Practical", "Experience"], and broke
+  // legitimate sentences like "Our platform integrates with Microsoft 365,
+  // Google Workspace, Slack…" into nonsense fragments. Net negative — the
+  // wall-of-text it was trying to fix is less bad than the over-split
+  // word-salad it produced. Single-paragraph rendering for source data
+  // that's already pre-flattened is an acceptable degradation.)
 
   // Otherwise: paragraphs. Reassemble by merging lines that don't end in
   // sentence punctuation (handles wrapped text).

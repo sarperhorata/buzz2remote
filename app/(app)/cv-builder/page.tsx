@@ -199,18 +199,28 @@ export default function CVBuilderPage() {
               key={id}
               onClick={() => setTemplate(id)}
               className={`text-left rounded-xl border-2 p-4 transition-all ${
-                active ? "border-amber-500 bg-amber-50" : "border-border bg-card hover:border-amber-300 hover:bg-amber-50/30"
+                active
+                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40"
+                  : "border-border bg-card hover:border-amber-300 hover:bg-amber-50/30 dark:hover:bg-amber-950/20"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="font-semibold text-sm">{meta.name}</span>
+                {/* QA bug #4: when selected, the title "Modern/Classic/Minimal"
+                    was using the default text-foreground colour. On the amber-50
+                    bg in light mode that's still dark slate (fine). On the
+                    amber-950/40 bg in dark mode that's near-white-on-dark
+                    (fine too). The reported "yellowish tone" was actually
+                    text-foreground showing through with the amber tint —
+                    overlapping the eye. Explicit colour pins it to the
+                    high-contrast tone for the active state in both modes. */}
+                <span className={`font-semibold text-sm ${active ? "text-amber-900 dark:text-amber-100" : "text-foreground"}`}>{meta.name}</span>
                 <span
                   className="size-3 rounded-full"
                   style={{ backgroundColor: meta.accent }}
                   aria-hidden
                 />
               </div>
-              <p className="text-xs text-muted-foreground leading-snug">{meta.description}</p>
+              <p className={`text-xs leading-snug ${active ? "text-amber-900/70 dark:text-amber-200/80" : "text-muted-foreground"}`}>{meta.description}</p>
             </button>
           );
         })}
@@ -808,24 +818,31 @@ function PreviewClassic({ form }: { form: CVData }) {
 }
 
 function PreviewMinimal({ form }: { form: CVData }) {
+  // Tightened spacing vs the first pass (mb-5 → mb-3 / mb-2 / mb-1) so that
+  // the Experience and Education sections always fit inside the A4 aspect
+  // preview frame. QA reported the headers showed but the items were
+  // "empty" — actually they were getting pushed below the visible scroll
+  // window. Also added `|| "—"` fallbacks (matching PreviewModern) so an
+  // entry with a null title still produces a visible line instead of a
+  // zero-height flex row.
   return (
-    <div className="h-full p-6 text-[10px] leading-relaxed">
-      {form.full_name && <div className="text-2xl font-bold tracking-tight leading-tight">{form.full_name}</div>}
-      {form.position && <div className="text-[11px] text-muted-foreground mb-3">{form.position}</div>}
-      <div className="text-[9px] text-muted-foreground mb-5">
+    <div className="h-full p-5 text-[10px] leading-relaxed">
+      {form.full_name && <div className="text-xl font-bold tracking-tight leading-tight">{form.full_name}</div>}
+      {form.position && <div className="text-[11px] text-muted-foreground mb-2">{form.position}</div>}
+      <div className="text-[9px] text-muted-foreground mb-3">
         {[form.email, form.phone, form.location].filter(Boolean).join("  ·  ")}
       </div>
-      {form.bio && <div className="text-[10px] mb-5 leading-relaxed">{form.bio}</div>}
+      {form.bio && <div className="text-[10px] mb-3 leading-relaxed line-clamp-3">{form.bio}</div>}
       {form.work_experience && form.work_experience.length > 0 && (
         <>
-          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2">Experience</div>
+          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1.5">Experience</div>
           {form.work_experience.map((w, i) => (
-            <div key={i} className="flex mb-3">
-              <div className="w-16 text-[8px] text-muted-foreground">{formatRange(w.start_date, w.end_date, w.is_current)}</div>
-              <div className="flex-1">
-                <div className="text-[10px] font-bold">{w.title}</div>
-                {(w.company || w.location) && <div className="text-[9px] text-muted-foreground">{w.company}{w.company && w.location ? " · " : ""}{w.location}</div>}
-                {w.description && <div className="text-[9px]">{w.description}</div>}
+            <div key={i} className="flex mb-2">
+              <div className="w-16 shrink-0 text-[8px] text-muted-foreground">{formatRange(w.start_date, w.end_date, w.is_current) || "—"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-bold">{w.title || "—"}</div>
+                {(w.company || w.location) && <div className="text-[9px] text-muted-foreground truncate">{w.company}{w.company && w.location ? " · " : ""}{w.location}</div>}
+                {w.description && <div className="text-[9px] line-clamp-2">{w.description}</div>}
               </div>
             </div>
           ))}
@@ -833,13 +850,13 @@ function PreviewMinimal({ form }: { form: CVData }) {
       )}
       {form.education && form.education.length > 0 && (
         <>
-          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 mt-3">Education</div>
+          <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1.5 mt-2">Education</div>
           {form.education.map((e, i) => (
-            <div key={i} className="flex mb-2">
-              <div className="w-16 text-[8px] text-muted-foreground">{formatRange(e.start_date, e.end_date)}</div>
-              <div className="flex-1">
-                <div className="text-[10px] font-bold">{e.degree}{e.field ? `, ${e.field}` : ""}</div>
-                {e.school && <div className="text-[9px] text-muted-foreground">{e.school}</div>}
+            <div key={i} className="flex mb-1.5">
+              <div className="w-16 shrink-0 text-[8px] text-muted-foreground">{formatRange(e.start_date, e.end_date) || "—"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-bold truncate">{e.degree || "—"}{e.field ? `, ${e.field}` : ""}</div>
+                {e.school && <div className="text-[9px] text-muted-foreground truncate">{e.school}</div>}
               </div>
             </div>
           ))}

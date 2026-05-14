@@ -16,6 +16,12 @@ import {
   FileText, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Profile {
   id: string;
@@ -400,63 +406,69 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {linkedInModalOpen && (
-        <LinkedInImportModal
-          onClose={() => setLinkedInModalOpen(false)}
-          activeProfileId={activeProfile?.id ?? null}
-          busy={linkedInBusy}
-          onBusyChange={setLinkedInBusy}
-          onComplete={(msg) => {
-            setMessage(msg);
+      {/* Always-mounted Dialog (controlled by `open` prop instead of
+          conditional render). The previous custom-modal implementation had
+          a "first click does nothing, second click works" bug — root cause
+          was timing in the conditional-render path (the modal's mount-
+          effect raced with the click that opened it). Base UI's Dialog
+          handles the controlled-open pattern correctly + ships proper
+          focus management, role="dialog", aria-modal, ESC-to-close, and
+          backdrop-click-to-close out of the box. */}
+      <LinkedInImportModal
+        open={linkedInModalOpen}
+        onOpenChange={setLinkedInModalOpen}
+        activeProfileId={activeProfile?.id ?? null}
+        busy={linkedInBusy}
+        onBusyChange={setLinkedInBusy}
+        onComplete={(msg) => {
+          setMessage(msg);
+          queryClient.invalidateQueries({ queryKey: ["profiles"] });
+          setLinkedInModalOpen(false);
+        }}
+        onLinkedInPdfImport={async (file) => {
+          // Reuses the same CV upload pipeline (server-side unpdf parse +
+          // profile-autofill). LinkedIn-exported PDFs are well-formed and
+          // parse cleanly — work history, education, skills, all of it.
+          if (!activeProfile) return;
+          setLinkedInBusy(true);
+          try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("profileId", activeProfile.id);
+            fd.append("save", "1");
+            fd.append("autofill", "1");
+            const res = await fetch("/api/cv/upload", { method: "POST", body: fd });
+            if (!res.ok) throw new Error((await res.json()).error || "Failed to parse LinkedIn PDF");
+            const { profile } = await res.json();
+            if (!profile || profile.__error) throw new Error(profile?.__error || "No data extracted");
+            setForm((prev) => ({
+              profile_name: prev.profile_name,
+              title: profile.position || prev.title,
+              bio: profile.bio || prev.bio,
+              skills: profile.skills?.length
+                ? Array.from(
+                    new Set([
+                      ...prev.skills,
+                      ...profile.skills.map((s: { name?: string } | string) =>
+                        typeof s === "string" ? s : s.name || ""
+                      ).filter(Boolean),
+                    ])
+                  )
+                : prev.skills,
+            }));
             queryClient.invalidateQueries({ queryKey: ["profiles"] });
+            setMessage({ type: "success", text: `LinkedIn PDF imported. Review your profile and save.` });
             setLinkedInModalOpen(false);
-          }}
-          fileInputRef={fileInputRef}
-          onLinkedInPdfImport={async (file) => {
-            // Reuses the same CV upload pipeline (server-side unpdf parse +
-            // profile-autofill). LinkedIn-exported PDFs are well-formed and
-            // parse cleanly — work history, education, skills, all of it.
-            if (!activeProfile) return;
-            setLinkedInBusy(true);
-            try {
-              const fd = new FormData();
-              fd.append("file", file);
-              fd.append("profileId", activeProfile.id);
-              fd.append("save", "1");
-              fd.append("autofill", "1");
-              const res = await fetch("/api/cv/upload", { method: "POST", body: fd });
-              if (!res.ok) throw new Error((await res.json()).error || "Failed to parse LinkedIn PDF");
-              const { profile } = await res.json();
-              if (!profile || profile.__error) throw new Error(profile?.__error || "No data extracted");
-              setForm((prev) => ({
-                profile_name: prev.profile_name,
-                title: profile.position || prev.title,
-                bio: profile.bio || prev.bio,
-                skills: profile.skills?.length
-                  ? Array.from(
-                      new Set([
-                        ...prev.skills,
-                        ...profile.skills.map((s: { name?: string } | string) =>
-                          typeof s === "string" ? s : s.name || ""
-                        ).filter(Boolean),
-                      ])
-                    )
-                  : prev.skills,
-              }));
-              queryClient.invalidateQueries({ queryKey: ["profiles"] });
-              setMessage({ type: "success", text: `LinkedIn PDF imported. Review your profile and save.` });
-              setLinkedInModalOpen(false);
-            } catch (err) {
-              setMessage({
-                type: "error",
-                text: err instanceof Error ? err.message : "LinkedIn PDF import failed",
-              });
-            } finally {
-              setLinkedInBusy(false);
-            }
-          }}
-        />
-      )}
+          } catch (err) {
+            setMessage({
+              type: "error",
+              text: err instanceof Error ? err.message : "LinkedIn PDF import failed",
+            });
+          } finally {
+            setLinkedInBusy(false);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -480,39 +492,23 @@ export default function ProfilePage() {
 // option — Quick OAuth gives you ~3 fields, PDF gives you everything.
 
 function LinkedInImportModal({
-  onClose,
+  open,
+  onOpenChange,
   activeProfileId,
   busy,
   onBusyChange,
   onComplete,
   onLinkedInPdfImport,
 }: {
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   activeProfileId: string | null;
   busy: boolean;
   onBusyChange: (b: boolean) => void;
   onComplete: (msg: { type: "success" | "error"; text: string }) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onLinkedInPdfImport: (file: File) => Promise<void>;
 }) {
   const localFileRef = useRef<HTMLInputElement>(null);
-  // Defer enabling the "click backdrop to close" handler by one event-loop
-  // tick. This fixes the "first click does nothing, second click opens"
-  // QA report (Bug #8): in some browser/test-runner combos the same
-  // click that flips the modal-open state propagates up to the freshly
-  // mounted backdrop and immediately closes it. With this gate, the
-  // close handler is a no-op for the first ~16 ms after mount.
-  const [canCloseOnBackdrop, setCanCloseOnBackdrop] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setCanCloseOnBackdrop(true), 0);
-    return () => clearTimeout(t);
-  }, []);
-  // Allow ESC to close the modal even while the backdrop-click is gated.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   async function handleQuickImport() {
     if (!activeProfileId) {
@@ -527,11 +523,7 @@ function LinkedInImportModal({
         // Not-linked case: kick off the LinkedIn OAuth flow. After the
         // round trip the user lands back on /profile and can click
         // "Quick Import" again.
-        if (data.code === "not_linked") {
-          await signIn("linkedin", { callbackUrl: "/profile" });
-          return;
-        }
-        if (data.code === "token_expired") {
+        if (data.code === "not_linked" || data.code === "token_expired") {
           await signIn("linkedin", { callbackUrl: "/profile" });
           return;
         }
@@ -555,23 +547,14 @@ function LinkedInImportModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-      onClick={canCloseOnBackdrop ? onClose : undefined}
-    >
-      <div
-        className="bg-card rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-5 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-5 border-b border-border flex-row items-center justify-between space-y-0">
+          <DialogTitle className="flex items-center gap-2 text-base">
             <Link2 className="size-5 text-[#0077B5]" />
-            <h2 className="text-lg font-semibold">Import from LinkedIn</h2>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-muted/50 rounded">
-            <X className="size-4 text-muted-foreground" />
-          </button>
-        </div>
+            Import from LinkedIn
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="p-5 space-y-4">
           {/* Full PDF flow — primary action */}
@@ -646,7 +629,7 @@ function LinkedInImportModal({
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
