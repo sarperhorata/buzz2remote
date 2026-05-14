@@ -88,22 +88,27 @@
   --sidebar-ring: oklch(0.769 0.188 70.08);
 
   /* Animated background orb colours — warm honey/amber palette to match
-     the bee brand. Each orb gets its own hue so the overlap reads as a
-     gradient instead of a flat blur. Alpha kept low (12-18%) so content
-     stays comfortably legible above. */
-  --orb-1: oklch(0.85 0.18 70 / 0.18);
-  --orb-2: oklch(0.78 0.16 50 / 0.14);
-  --orb-3: oklch(0.92 0.10 95 / 0.20);
+     the bee brand. Bumped from the first-pass 14-20% alphas: user
+     reported "hiç efekt görmüyorum" even after the layering fix because
+     on a near-white page the orbs were just whisper-faint tints. Higher
+     alphas + slightly more saturated hues now produce clearly visible
+     coloured spotlights drifting across the canvas. Content stays
+     legible because the orbs are heavily blurred (80px) and never sit
+     directly under cards (z-index: -1). */
+  --orb-1: oklch(0.85 0.20 70 / 0.40);
+  --orb-2: oklch(0.78 0.18 40 / 0.34);
+  --orb-3: oklch(0.92 0.15 95 / 0.42);
   --orb-blend: normal;
 
-  /* Aurora layer — four-stop conic-gradient that slowly rotates.
-     Light-mode palette: warm pink → orange → yellow → cream. Reads
-     as a soft "morning haze" through the orbs. */
-  --aurora-1: oklch(0.88 0.10 30);   /* warm pink */
-  --aurora-2: oklch(0.85 0.15 60);   /* peach */
-  --aurora-3: oklch(0.92 0.12 90);   /* cream yellow */
-  --aurora-4: oklch(0.95 0.05 85);   /* off-white */
-  --aurora-opacity: 0.35;
+  /* Aurora layer — four-stop conic-gradient that slowly rotates. Pushed
+     opacity 0.35 → 0.55 (matching dark-mode bump) and saturated the
+     stops so the rotation reads as a real colour sweep rather than a
+     pale wash. */
+  --aurora-1: oklch(0.82 0.18 30);   /* warm pink */
+  --aurora-2: oklch(0.82 0.20 60);   /* peach */
+  --aurora-3: oklch(0.88 0.18 90);   /* cream yellow */
+  --aurora-4: oklch(0.85 0.12 130);  /* mint accent — adds cool counterweight */
+  --aurora-opacity: 0.55;
 }
 
 .dark {
