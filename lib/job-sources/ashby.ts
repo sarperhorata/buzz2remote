@@ -1,10 +1,14 @@
 import { JobSource, RawJob } from "./types";
 
-// 15 companies using Ashby ATS (from distill export)
+// 29 companies using Ashby ATS (distill + embedded-ATS detection from direct
+// career pages — see scripts/pilot-detect-embedded-ats.ts).
 const ASHBY_COMPANIES = [
-  "deel","eightsleep","stedi","gruntwork","keyrock",
-  "talentdisruptors","li.fi","oplabs","ens-labs","cargo-one",
-  "signalfire","smallpdf","outliant","acorns",
+  "acorns","astronomer","blacksmith","buffer","cargo-one",
+  "chainlink-labs","chilipiper","close","deel","dourolabs",
+  "eightsleep","ens-labs","goteleport","gruntwork","helpscout",
+  "keyrock","li.fi","linear","nethermind","nextmatter",
+  "oplabs","outliant","percona","pleo","signalfire",
+  "smallpdf","stedi","talentdisruptors","workos",
 ];
 
 async function fetchAshbyJobs(company: string): Promise<RawJob[]> {

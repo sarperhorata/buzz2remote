@@ -1,8 +1,9 @@
 import { JobSource, RawJob } from "./types";
 
-// 4 companies using Recruitee (from distill export)
+// 5 companies using Recruitee (distill + embedded-ATS detection — see
+// scripts/pilot-detect-embedded-ats.ts).
 const RECRUITEE_COMPANIES = [
-  "scholarshipowl","supersummary","cobbleweb","tether",
+  "bigcartel","cobbleweb","scholarshipowl","supersummary","tether",
 ];
 
 async function fetchRecruiteeJobs(company: string): Promise<RawJob[]> {

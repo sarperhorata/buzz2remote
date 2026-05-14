@@ -1,18 +1,19 @@
 import { JobSource, RawJob } from "./types";
 
-// 67 remote-first companies using Lever ATS (merged from distill export + curated list)
+// 69 remote-first companies using Lever ATS (distill + embedded-ATS detection
+// from direct career pages — see scripts/pilot-detect-embedded-ats.ts).
 const LEVER_COMPANIES = [
   "15five","airalo","airtable","anduril","anthropic","appen-2","aurora-dev",
   "bigtime","binance","blum","calendly","circonus","clerky","clickup",
   "cockroachlabs","codecombat","colibrigroup","collabora","confluent",
   "databricks","dnc","elevatelabs","espresso","fireflyon","formulamonks",
-  "gate.io","girlswhocode","gong-io","heetch","huggingface","jumpcloud",
-  "kong","kraken","kungfu","lacework","lendbuzz","loom","miro","netflix",
-  "olo","openai","palantir","peerspace","picus","rainforest","rarible",
-  "replit","retool","rippling","roofstacks","sanabenefits","scale",
-  "seedify-fund","seerinteractive","shopify","skillshare","sonatype",
-  "spotify","strapi","superside","threecolts","timescale","tokenmetrics",
-  "vrchat","webflow","welocalize","wiz-inc",
+  "gate.io","girlswhocode","gong-io","heetch","huggingface","innocraft",
+  "jumpcloud","kong","kraken","kungfu","lacework","lendbuzz","loom","miro",
+  "netflix","offchainlabs","olo","openai","palantir","peerspace","picus",
+  "rainforest","rarible","replit","retool","rippling","roofstacks",
+  "sanabenefits","scale","seedify-fund","seerinteractive","shopify",
+  "skillshare","sonatype","spotify","strapi","superside","threecolts",
+  "timescale","tokenmetrics","vrchat","webflow","welocalize","wiz-inc",
 ];
 
 async function fetchLeverJobs(company: string): Promise<RawJob[]> {
