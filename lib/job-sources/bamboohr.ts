@@ -71,10 +71,13 @@ async function fetchBambooHRJobs(slug: string): Promise<RawJob[]> {
           salary: null,
           salary_min: null,
           salary_max: null,
-          salary_currency: null,
+          // RawJob types these as `string | undefined` (not nullable). Use
+          // `undefined` so the field is just omitted when we have no value
+          // — TypeScript rejects `null` for the non-nullable optionals.
+          salary_currency: undefined,
           job_type: (j.employmentStatusLabel ?? "Full-time").trim() || "Full-time",
-          remote_type: isRemote ? "Remote" : null,
-          experience_level: null,
+          remote_type: isRemote ? "Remote" : undefined,
+          experience_level: undefined,
           skills: [],
           tags: j.departmentLabel ? [j.departmentLabel] : [],
           posted_date: j.datePosted ?? null,
