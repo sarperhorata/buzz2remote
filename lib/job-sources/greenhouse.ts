@@ -1,16 +1,22 @@
 import { JobSource, RawJob } from "./types";
 
-// 58 remote-first companies using Greenhouse ATS (merged from distill export + curated list)
+// 72 remote-first companies using Greenhouse ATS (merged from distill export +
+// curated list + embedded-ATS auto-detection from direct career pages, see
+// scripts/pilot-detect-embedded-ats.ts). Many sites that look like custom
+// HTML career pages actually iframe Greenhouse under the hood — sweeping
+// 297 "direct" pages turned up 14 new Greenhouse slugs.
 const GREENHOUSE_COMPANIES = [
-  "airbnb","atomicvest","auth0","automattic","axios","bevy","beyondfinance",
-  "brex","cameo","cloudflare","coinbase","convertkit","datadog","dbt-labs",
-  "deel","discord","downingcapitalgroup","eclinicalsolutions","elastic",
-  "exodus54","figma","figure","fulfil","garnerhealth","generalassembly",
-  "gitlab","givedirectly","grafana-labs","gusto","hashicorp","inchargeenergy",
-  "instacart","linear","mongodb","netlify","notion","pandadoc","pitch",
-  "plaid","productpeople","ramp","recharge","reddit","revenuecat","roadie",
-  "snyk","sourcegraph91","stripe","supabase","thesis","twilio",
-  "userinterviews","vercel","wikimedia","woo","wyndlabs","xapo61","zapier",
+  "ahrefsjobs","airbnb","atomicvest","auth0","automattic","axios","bevy",
+  "beyondfinance","boulevard","brex","bugcrowd","cameo","canonical","cloudflare",
+  "coinbase","convertkit","datadog","dbt-labs","deel","deliveryassociates",
+  "disco","discord","downingcapitalgroup","duolingo","eclinicalsolutions",
+  "elastic","exodus54","figma","figure","fulfil","garnerhealth","generalassembly",
+  "gitlab","givedirectly","grafana-labs","grafanalabs","gusto","hashicorp",
+  "inchargeenergy","instacart","invisibletech","linear","mercury","mongodb",
+  "nationbuilder","netlify","notion","pandadoc","pitch","plaid","productpeople",
+  "ramp","recharge","reddit","remotecom","revenuecat","roadie","securityscorecard",
+  "snyk","sourcegraph91","stripe","supabase","thesis","twilio","userinterviews",
+  "vercel","wikimedia","woo","wyndlabs","xapo61","zapier",
 ];
 
 async function fetchGreenhouseJobs(company: string): Promise<RawJob[]> {

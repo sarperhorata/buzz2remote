@@ -20,17 +20,17 @@ function scoreColor(score: number): string {
 }
 
 function scoreBg(score: number): string {
-  if (score >= 71) return "border-green-500 bg-green-50";
-  if (score >= 41) return "border-amber-400 bg-amber-50";
-  return "border-red-400 bg-red-50";
+  if (score >= 71) return "border-green-500 bg-green-50 dark:bg-green-950/30";
+  if (score >= 41) return "border-amber-400 bg-amber-50 dark:bg-amber-950/30";
+  return "border-red-400 bg-red-50 dark:bg-red-950/30";
 }
 
 function ScoreCircle({ label, score }: { label: string; score: number }) {
   return (
     <div className={`flex flex-col items-center p-6 rounded-xl border-2 ${scoreBg(score)}`}>
       <div className={`text-4xl font-bold ${scoreColor(score)}`}>{score}</div>
-      <div className="text-xs text-gray-500 mt-1">/100</div>
-      <div className="text-sm font-medium text-gray-700 mt-2 text-center">{label}</div>
+      <div className="text-xs text-muted-foreground mt-1">/100</div>
+      <div className="text-sm font-medium text-foreground mt-2 text-center">{label}</div>
     </div>
   );
 }
@@ -122,12 +122,12 @@ export default function CvReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-muted/30 py-10 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">📄 CV Review</h1>
-          <p className="text-gray-500 mt-1">Upload your CV (PDF, DOCX, or TXT) for instant AI feedback</p>
+          <h1 className="text-3xl font-bold text-foreground">📄 CV Review</h1>
+          <p className="text-muted-foreground mt-1">Upload your CV (PDF, DOCX, or TXT) for instant AI feedback</p>
         </div>
 
         {/* Error */}
@@ -139,14 +139,14 @@ export default function CvReviewPage() {
 
         {/* Loading state */}
         {!analysis && isLoading && (
-          <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
+          <div className="bg-card rounded-xl border border-border p-10 text-center">
             <div className="size-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
               <Loader2 className="size-7 text-amber-600 animate-spin" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Analyzing your CV…</h2>
-            <p className="text-sm text-gray-500 mb-6">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Analyzing your CV…</h2>
+            <p className="text-sm text-muted-foreground mb-6">
               {filename
-                ? <>Reading <strong className="text-gray-700">{filename}</strong> and generating feedback. Usually 10–20 seconds.</>
+                ? <>Reading <strong className="text-foreground">{filename}</strong> and generating feedback. Usually 10–20 seconds.</>
                 : "Generating feedback. Usually 10–20 seconds."}
             </p>
             <div className="max-w-sm mx-auto space-y-2 text-left">
@@ -159,13 +159,13 @@ export default function CvReviewPage() {
 
         {/* Input form */}
         {!analysis && !isLoading && (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 space-y-5">
+          <div className="bg-card rounded-xl border border-border p-8 space-y-5">
             {/* Mode toggle */}
-            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <div className="inline-flex bg-muted/50 rounded-lg p-1">
               <button
                 onClick={() => setMode("upload")}
                 className={`px-4 py-1.5 text-sm rounded-md transition-colors font-medium ${
-                  mode === "upload" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+                  mode === "upload" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Upload file
@@ -173,7 +173,7 @@ export default function CvReviewPage() {
               <button
                 onClick={() => setMode("paste")}
                 className={`px-4 py-1.5 text-sm rounded-md transition-colors font-medium ${
-                  mode === "paste" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+                  mode === "paste" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Paste text
@@ -182,29 +182,29 @@ export default function CvReviewPage() {
 
             {/* Optional job title — shared between modes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Target Job Title <span className="text-gray-400 font-normal">(optional, improves match score)</span>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Target Job Title <span className="text-muted-foreground/70 font-normal">(optional, improves match score)</span>
               </label>
               <input
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Senior Frontend Engineer"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               />
             </div>
 
             {/* Mode body */}
             {mode === "upload" ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Your CV</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Your CV</label>
                 <div
                   onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                   onDragLeave={() => setDragActive(false)}
                   onDrop={onDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`cursor-pointer border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    dragActive ? "border-amber-500 bg-amber-50" : "border-gray-300 hover:border-amber-400 hover:bg-gray-50"
+                    dragActive ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40" : "border-border hover:border-amber-400 hover:bg-muted/30"
                   }`}
                 >
                   <input
@@ -214,22 +214,22 @@ export default function CvReviewPage() {
                     onChange={(e) => handleFile(e.target.files?.[0])}
                     className="hidden"
                   />
-                  <Upload className="size-10 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-700">
+                  <Upload className="size-10 text-muted-foreground/70 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground">
                     Drop your CV here, or click to browse
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">PDF, DOCX, or TXT. Max 8 MB.</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, or TXT. Max 8 MB.</p>
                 </div>
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Your CV</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Your CV</label>
                 <textarea
                   value={cvText}
                   onChange={(e) => setCvText(e.target.value)}
                   placeholder="Paste your CV text here..."
                   rows={18}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-y"
+                  className="w-full border border-border rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-y"
                 />
                 <button
                   onClick={handlePasteAnalyze}
@@ -248,12 +248,12 @@ export default function CvReviewPage() {
           <div className="space-y-6">
             {/* Filename / extraction confirmation */}
             {(filename || autofillPreview) && (
-              <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 text-sm">
-                <FileText className="size-5 text-gray-400 shrink-0" />
+              <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 text-sm">
+                <FileText className="size-5 text-muted-foreground/70 shrink-0" />
                 <div className="min-w-0">
-                  {filename && <div className="font-medium text-gray-900 truncate">{filename}</div>}
+                  {filename && <div className="font-medium text-foreground truncate">{filename}</div>}
                   {autofillPreview && (
-                    <div className="text-gray-500 truncate">
+                    <div className="text-muted-foreground truncate">
                       Read: {autofillPreview.full_name ? `${autofillPreview.full_name}, ` : ""}
                       {autofillPreview.position || "no title detected"} — {autofillPreview.skillCount ?? 0} skills extracted
                     </div>
@@ -264,7 +264,7 @@ export default function CvReviewPage() {
 
             {/* Job match badge */}
             {analysis.job_match_score !== undefined && jobTitle && (
-              <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">
+              <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-blue-800 dark:text-blue-200 text-sm font-medium px-4 py-2 rounded-full">
                 <span>🎯</span>
                 <span>
                   Job Match for <strong>{jobTitle}</strong>: {analysis.job_match_score}%
@@ -280,11 +280,11 @@ export default function CvReviewPage() {
 
             {/* 4-card grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-green-500 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">✅ Strengths</h3>
+              <div className="bg-card rounded-xl border border-border border-l-4 border-l-green-500 p-5">
+                <h3 className="font-semibold text-foreground mb-3">✅ Strengths</h3>
                 <ul className="space-y-2">
                   {analysis.strengths?.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-600 flex gap-2">
+                    <li key={i} className="text-sm text-muted-foreground flex gap-2">
                       <span className="text-green-500 shrink-0 mt-0.5">•</span>
                       {s}
                     </li>
@@ -292,11 +292,11 @@ export default function CvReviewPage() {
                 </ul>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-400 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">❌ Areas to Improve</h3>
+              <div className="bg-card rounded-xl border border-border border-l-4 border-l-red-400 p-5">
+                <h3 className="font-semibold text-foreground mb-3">❌ Areas to Improve</h3>
                 <ul className="space-y-2">
                   {analysis.weaknesses?.map((w, i) => (
-                    <li key={i} className="text-sm text-gray-600 flex gap-2">
+                    <li key={i} className="text-sm text-muted-foreground flex gap-2">
                       <span className="text-red-400 shrink-0 mt-0.5">•</span>
                       {w}
                     </li>
@@ -304,25 +304,25 @@ export default function CvReviewPage() {
                 </ul>
               </div>
 
-              <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">💡 Specific Suggestions</h3>
+              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50 p-5">
+                <h3 className="font-semibold text-foreground mb-3">💡 Specific Suggestions</h3>
                 <ul className="space-y-2">
                   {analysis.suggestions?.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-700 flex gap-2">
-                      <span className="text-amber-500 font-bold shrink-0">{i + 1}.</span>
+                    <li key={i} className="text-sm text-foreground flex gap-2">
+                      <span className="text-amber-500 dark:text-amber-400 font-bold shrink-0">{i + 1}.</span>
                       {s}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-blue-50 rounded-xl border border-blue-200 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">🔑 Missing Keywords</h3>
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900/50 p-5">
+                <h3 className="font-semibold text-foreground mb-3">🔑 Missing Keywords</h3>
                 <div className="flex flex-wrap gap-2">
                   {analysis.keywords_missing?.map((kw, i) => (
                     <span
                       key={i}
-                      className="bg-white text-blue-700 border border-blue-200 text-xs font-medium px-2.5 py-1 rounded-full"
+                      className="bg-card text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 text-xs font-medium px-2.5 py-1 rounded-full"
                     >
                       {kw}
                     </span>
@@ -334,7 +334,7 @@ export default function CvReviewPage() {
             <div className="flex gap-2">
               <button
                 onClick={handleReset}
-                className="bg-white border border-gray-300 text-gray-700 font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="bg-card border border-border text-foreground font-medium px-5 py-2.5 rounded-lg hover:bg-muted/30 transition-colors text-sm"
               >
                 Analyze Another
               </button>
@@ -362,9 +362,9 @@ function Step({ label, done, active }: { label: string; done?: boolean; active?:
       ) : active ? (
         <Loader2 className="size-4 animate-spin text-amber-500 shrink-0" />
       ) : (
-        <div className="size-4 rounded-full border-2 border-gray-200 shrink-0" />
+        <div className="size-4 rounded-full border-2 border-border shrink-0" />
       )}
-      <span className={done ? "text-gray-500" : active ? "text-gray-900 font-medium" : "text-gray-400"}>
+      <span className={done ? "text-muted-foreground" : active ? "text-foreground font-medium" : "text-muted-foreground/70"}>
         {label}
       </span>
     </div>

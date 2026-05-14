@@ -32,7 +32,7 @@ export default function HelpPage() {
       {/* Hero */}
       <section className="relative overflow-hidden gradient-hero text-white py-20">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white/5 animate-float" />
+          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-card/5 animate-float" />
         </div>
         <div className="relative max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Help Center</h1>

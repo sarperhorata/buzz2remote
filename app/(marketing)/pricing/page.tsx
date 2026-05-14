@@ -99,7 +99,7 @@ export default function PricingPage() {
             onClick={() => setBilling("monthly")}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               billing === "monthly"
-                ? "bg-white shadow-sm text-foreground"
+                ? "bg-card shadow-sm text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -109,7 +109,7 @@ export default function PricingPage() {
             onClick={() => setBilling("annual")}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               billing === "annual"
-                ? "bg-white shadow-sm text-foreground"
+                ? "bg-card shadow-sm text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -122,7 +122,7 @@ export default function PricingPage() {
       {/* Plan Cards */}
       <div className="grid md:grid-cols-3 gap-6 mb-16">
         {/* Free */}
-        <div className="border border-border rounded-2xl p-8 bg-white">
+        <div className="border border-border rounded-2xl p-8 bg-card">
           <h2 className="text-xl font-bold mb-1">Free</h2>
           <p className="text-sm text-muted-foreground mb-6">For casual job seekers</p>
           <div className="mb-6">
@@ -158,7 +158,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pro — highlighted */}
-        <div className="border-2 border-primary rounded-2xl p-8 bg-white relative">
+        <div className="border-2 border-primary rounded-2xl p-8 bg-card relative">
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
             Most Popular
           </span>
@@ -207,7 +207,7 @@ export default function PricingPage() {
         </div>
 
         {/* Premium */}
-        <div className="border border-border rounded-2xl p-8 bg-white">
+        <div className="border border-border rounded-2xl p-8 bg-card">
           <h2 className="text-xl font-bold mb-1">Premium</h2>
           <p className="text-sm text-muted-foreground mb-6">For power users</p>
           <div className="mb-6">
@@ -254,7 +254,7 @@ export default function PricingPage() {
           <div
             key={row.label}
             className={`grid grid-cols-4 px-6 py-3 ${
-              i % 2 === 0 ? "bg-white" : "bg-muted/10"
+              i % 2 === 0 ? "bg-card" : "bg-muted/10"
             } ${i < featureComparison.length - 1 ? "border-b border-border/50" : ""}`}
           >
             <div className="text-sm text-muted-foreground">{row.label}</div>

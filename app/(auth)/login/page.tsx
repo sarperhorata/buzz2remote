@@ -58,8 +58,8 @@ function LoginForm() {
       <div className="grid md:grid-cols-2 gap-0 w-full max-w-4xl overflow-hidden rounded-2xl shadow-2xl">
         {/* Left - Gradient */}
         <div className="hidden md:flex gradient-hero p-10 flex-col justify-center text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white/5 animate-float" />
-          <div className="absolute bottom-10 -left-10 w-40 h-40 rounded-full bg-white/5 animate-float" style={{ animationDelay: "3s" }} />
+          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-card/5 animate-float" />
+          <div className="absolute bottom-10 -left-10 w-40 h-40 rounded-full bg-card/5 animate-float" style={{ animationDelay: "3s" }} />
           <div className="relative">
             <div className="flex items-center gap-2 mb-6">
               <BeeIcon size={40} />

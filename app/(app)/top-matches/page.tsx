@@ -31,13 +31,13 @@ function scoreRing(score: number): string {
   if (score >= 80) return "ring-emerald-500 text-emerald-600";
   if (score >= 60) return "ring-amber-500 text-amber-600";
   if (score >= 40) return "ring-orange-500 text-orange-600";
-  return "ring-gray-400 text-gray-600";
+  return "ring-gray-400 text-muted-foreground";
 }
 
 function ScoreBadge({ score }: { score: number }) {
   return (
     <div
-      className={`shrink-0 w-16 h-16 rounded-full bg-white ring-4 ${scoreRing(
+      className={`shrink-0 w-16 h-16 rounded-full bg-card ring-4 ${scoreRing(
         score
       )} flex items-center justify-center font-bold text-lg shadow-sm`}
     >
@@ -49,7 +49,7 @@ function ScoreBadge({ score }: { score: number }) {
 function MatchCard({ match, blurred = false }: { match: TopMatch; blurred?: boolean }) {
   return (
     <div
-      className={`bg-white border border-blue-100 rounded-2xl p-6 shadow-sm ${
+      className={`bg-card border border-blue-100 rounded-2xl p-6 shadow-sm ${
         blurred ? "filter blur-sm pointer-events-none select-none" : ""
       }`}
       aria-hidden={blurred}
@@ -59,12 +59,12 @@ function MatchCard({ match, blurred = false }: { match: TopMatch; blurred?: bool
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-lg font-bold text-gray-900 truncate">{match.title}</h3>
-              <div className="text-sm text-gray-600 mt-0.5">{match.company}</div>
+              <h3 className="text-lg font-bold text-foreground truncate">{match.title}</h3>
+              <div className="text-sm text-muted-foreground mt-0.5">{match.company}</div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-500">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
             {match.location && (
               <span className="inline-flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ function MatchCard({ match, blurred = false }: { match: TopMatch; blurred?: bool
               {match.skills.slice(0, 8).map((s, i) => (
                 <span
                   key={i}
-                  className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md"
+                  className="text-xs bg-muted/50 text-foreground px-2 py-0.5 rounded-md"
                 >
                   {s}
                 </span>
@@ -112,7 +112,7 @@ function MatchCard({ match, blurred = false }: { match: TopMatch; blurred?: bool
             <Sparkles className="w-4 h-4" />
             Why you&apos;re a strong match
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">{match.strong_match_reason}</p>
+          <p className="text-sm text-foreground leading-relaxed">{match.strong_match_reason}</p>
         </div>
       )}
 
@@ -122,7 +122,7 @@ function MatchCard({ match, blurred = false }: { match: TopMatch; blurred?: bool
             <AlertTriangle className="w-4 h-4" />
             Concerns
           </div>
-          <ul className="text-sm text-gray-700 leading-relaxed space-y-1">
+          <ul className="text-sm text-foreground leading-relaxed space-y-1">
             {match.concerns.map((c, i) => (
               <li key={i} className="flex gap-2">
                 <span className="text-amber-500 mt-0.5 shrink-0">•</span>
@@ -157,18 +157,18 @@ function ComparisonTable() {
   const renderCell = (v: boolean | string) => {
     if (v === true) return <Check className="w-5 h-5 text-emerald-500 mx-auto" />;
     if (v === false) return <X className="w-5 h-5 text-gray-300 mx-auto" />;
-    return <span className="text-gray-400">{v}</span>;
+    return <span className="text-muted-foreground/70">{v}</span>;
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
-      <div className="bg-white border border-gray-200 rounded-2xl p-6">
-        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">Free</div>
-        <div className="text-xl font-bold text-gray-900 mb-4">Standard</div>
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-1">Free</div>
+        <div className="text-xl font-bold text-foreground mb-4">Standard</div>
         <ul className="space-y-3">
           {rows.map((r, i) => (
             <li key={i} className="flex items-center justify-between text-sm">
-              <span className="text-gray-700">{r.label}</span>
+              <span className="text-foreground">{r.label}</span>
               <span>{renderCell(r.free)}</span>
             </li>
           ))}
@@ -179,11 +179,11 @@ function ComparisonTable() {
           RECOMMENDED
         </div>
         <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-1">Top Match</div>
-        <div className="text-xl font-bold text-gray-900 mb-4">Pro</div>
+        <div className="text-xl font-bold text-foreground mb-4">Pro</div>
         <ul className="space-y-3">
           {rows.map((r, i) => (
             <li key={i} className="flex items-center justify-between text-sm">
-              <span className="text-gray-800">{r.label}</span>
+              <span className="text-foreground">{r.label}</span>
               <span>{renderCell(r.pro)}</span>
             </li>
           ))}
@@ -202,14 +202,14 @@ function ComparisonTable() {
 function UnlockOverlay() {
   return (
     <div className="absolute inset-x-0 top-8 flex justify-center px-4 pointer-events-none z-10">
-      <div className="bg-white shadow-xl border border-gray-200 rounded-2xl p-8 max-w-lg w-full pointer-events-auto">
+      <div className="bg-card shadow-xl border border-border rounded-2xl p-8 max-w-lg w-full pointer-events-auto">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
             <Lock className="w-5 h-5 text-amber-600" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Your personalized matches are ready</h3>
+          <h3 className="text-lg font-bold text-foreground">Your personalized matches are ready</h3>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Unlock to see AI-powered insights tailored to your profile — including why each role fits and where the gaps are.
         </p>
         <ul className="space-y-2 mb-5">
@@ -218,7 +218,7 @@ function UnlockOverlay() {
             "Get flagged concerns before you apply",
             "Ranked by how competitive you are",
           ].map((b, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+            <li key={i} className="flex items-start gap-2 text-sm text-foreground">
               <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
               <span>{b}</span>
             </li>
@@ -240,16 +240,16 @@ function UnlockOverlay() {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-blue-100 rounded-2xl p-6 shadow-sm animate-pulse">
+    <div className="bg-card border border-blue-100 rounded-2xl p-6 shadow-sm animate-pulse">
       <div className="flex items-start gap-4">
-        <div className="w-16 h-16 rounded-full bg-gray-200" />
+        <div className="w-16 h-16 rounded-full bg-muted" />
         <div className="flex-1 space-y-3">
-          <div className="h-5 bg-gray-200 rounded w-2/3" />
-          <div className="h-4 bg-gray-100 rounded w-1/3" />
+          <div className="h-5 bg-muted rounded w-2/3" />
+          <div className="h-4 bg-muted/50 rounded w-1/3" />
           <div className="flex gap-2">
-            <div className="h-5 bg-gray-100 rounded w-16" />
-            <div className="h-5 bg-gray-100 rounded w-20" />
-            <div className="h-5 bg-gray-100 rounded w-14" />
+            <div className="h-5 bg-muted/50 rounded w-16" />
+            <div className="h-5 bg-muted/50 rounded w-20" />
+            <div className="h-5 bg-muted/50 rounded w-14" />
           </div>
         </div>
       </div>
@@ -278,12 +278,12 @@ export default function TopMatchesPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-gray-900">Your Top Match Results</h1>
+            <h1 className="text-3xl font-bold text-foreground">Your Top Match Results</h1>
             <span className="text-xs font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
               BETA
             </span>
           </div>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Unlock your personalized matches — ranked by how competitive you are for each role.
           </p>
         </div>
@@ -306,10 +306,10 @@ export default function TopMatchesPage() {
 
         {/* Needs profile */}
         {!isLoading && data?.needsProfile && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+          <div className="bg-card rounded-2xl border border-border p-10 text-center">
             <div className="text-4xl mb-3">📝</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Complete your profile to see your top matches</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">Complete your profile to see your top matches</h2>
+            <p className="text-muted-foreground text-sm mb-6">
               Add your title and skills so we can rank jobs against your background.
             </p>
             <Link
@@ -323,9 +323,9 @@ export default function TopMatchesPage() {
 
         {/* Empty matches */}
         {!isLoading && data && !data.needsProfile && data.matches.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">No matches yet</h2>
-            <p className="text-gray-500 text-sm">
+          <div className="bg-card rounded-2xl border border-border p-10 text-center">
+            <h2 className="text-xl font-bold text-foreground mb-2">No matches yet</h2>
+            <p className="text-muted-foreground text-sm">
               We couldn&apos;t find strong matches right now. Try refining your profile or check back later.
             </p>
           </div>
@@ -361,14 +361,14 @@ export default function TopMatchesPage() {
                 {data.matches.length > 1 && (
                   <>
                     <div className="my-8 flex items-center gap-3">
-                      <div className="flex-1 h-px bg-gray-200" />
-                      <div className="text-sm text-gray-600 font-medium flex items-center gap-2">
+                      <div className="flex-1 h-px bg-muted" />
+                      <div className="text-sm text-muted-foreground font-medium flex items-center gap-2">
                         <span>💡</span>
                         <span>
                           {data.matches.length - 1} personalized matches waiting — tailored to your profile, goals, and preferences
                         </span>
                       </div>
-                      <div className="flex-1 h-px bg-gray-200" />
+                      <div className="flex-1 h-px bg-muted" />
                     </div>
 
                     {/* Blurred cards with overlay */}

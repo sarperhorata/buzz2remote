@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, X, LogOut, User, Settings, LayoutDashboard, FileText, Briefcase, Building2, CreditCard, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BeeIcon } from "@/components/BeeIcon";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
   { href: "/jobs", label: "Jobs", icon: Briefcase },
@@ -55,7 +56,7 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border ${
+      className={`sticky top-0 z-50 bg-background/85 backdrop-blur-md border-b border-border ${
         isAppRoute ? "hidden md:block" : ""
       }`}
     >
@@ -82,6 +83,9 @@ export default function Header() {
 
           {/* Desktop Auth */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme toggle visible regardless of auth state — both logged-in
+                and signed-out users should be able to switch theme. */}
+            <ThemeToggle className="text-muted-foreground hover:text-foreground" />
             {session ? (
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50">
@@ -139,13 +143,19 @@ export default function Header() {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          {/* Mobile right-side controls — theme toggle + hamburger sit next
+              to each other so users can change theme without opening the
+              menu. */}
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle className="text-muted-foreground" />
+            <button
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}

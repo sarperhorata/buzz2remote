@@ -86,6 +86,37 @@
   --sidebar-accent-foreground: oklch(0.25 0.04 60);
   --sidebar-border: oklch(0.92 0.005 85);
   --sidebar-ring: oklch(0.769 0.188 70.08);
+
+  /* Animated background orb colours — warm honey/amber palette to match
+     the bee brand. Bumped from the first-pass 14-20% alphas: user
+     reported "hiç efekt görmüyorum" even after the layering fix because
+     on a near-white page the orbs were just whisper-faint tints. Higher
+     alphas + slightly more saturated hues now produce clearly visible
+     coloured spotlights drifting across the canvas. Content stays
+     legible because the orbs are heavily blurred (80px) and never sit
+     directly under cards (z-index: -1). */
+  --orb-1: oklch(0.85 0.20 70 / 0.40);
+  --orb-2: oklch(0.78 0.18 40 / 0.34);
+  --orb-3: oklch(0.92 0.15 95 / 0.42);
+  --orb-blend: normal;
+
+  /* Aurora layer — four-stop conic-gradient that slowly rotates. Pushed
+     opacity 0.35 → 0.55 (matching dark-mode bump) and saturated the
+     stops so the rotation reads as a real colour sweep rather than a
+     pale wash. */
+  --aurora-1: oklch(0.82 0.18 30);   /* warm pink */
+  --aurora-2: oklch(0.82 0.20 60);   /* peach */
+  --aurora-3: oklch(0.88 0.18 90);   /* cream yellow */
+  --aurora-4: oklch(0.85 0.12 130);  /* mint accent — adds cool counterweight */
+  --aurora-opacity: 0.55;
+
+  /* Floating-particle colour — DARK warm amber. Playwright verification
+     showed pale amber dots on the amber-gradient page bg had near-zero
+     contrast in light mode (whole layer disappeared). Inverted to a
+     darker shade (lightness 0.4 instead of 0.7) so each dot reads as a
+     small bronze speck punched OUT of the warm canvas. Stays on-brand
+     (still amber hue) while now actually being visible. */
+  --particle-color: oklch(0.4 0.20 50);
 }
 
 .dark {
@@ -120,17 +151,48 @@
   --sidebar-accent-foreground: oklch(0.95 0.01 85);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.8 0.18 75);
+
+  /* Dark mode orbs — significantly bumped alphas and shifted hues
+     brighter. First pass with 18-22% alphas on a 0.14-lightness body bg
+     resulted in barely-perceptible glow ("FE arka planında bir efekt
+     görmüyorum"). Pushed hues toward 0.65-0.7 lightness and alphas to
+     0.40-0.50 so the orbs read as actual coloured spotlights against
+     the dark slate canvas. screen blend keeps them luminous rather
+     than translucent. */
+  --orb-1: oklch(0.7 0.20 70 / 0.45);
+  --orb-2: oklch(0.65 0.18 30 / 0.45);
+  --orb-3: oklch(0.62 0.16 220 / 0.40);
+  --orb-blend: screen;
+
+  /* Dark aurora — shifted brighter (lightness 0.5-0.6 instead of 0.4)
+     and bumped opacity from 0.28 → 0.55. The cool↔warm hue rotation
+     stays the same. Now you can clearly see the colour field drift
+     through dark gaps in the page content. */
+  --aurora-1: oklch(0.55 0.18 280);  /* indigo */
+  --aurora-2: oklch(0.6 0.20 320);   /* magenta */
+  --aurora-3: oklch(0.65 0.20 50);   /* warm amber */
+  --aurora-4: oklch(0.5 0.14 200);   /* teal */
+  --aurora-opacity: 0.55;
+
+  /* Dark mode particles — pale warm-white. Slightly brighter than the
+     amber light-mode tone so they pop against the dark slate canvas. */
+  --particle-color: oklch(0.95 0.08 80);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+  /* bg-background lives on <html>, NOT <body> — see app/layout.tsx for why.
+     If body also has bg-background, Chrome/Safari treat it as if body
+     creates a stacking context and the fixed z-index: -1 AnimatedBackground
+     child paints UNDER body's bg → invisible. Body keeps text-foreground
+     for inherited colour, html owns the painted bg. */
   html {
-    @apply font-sans;
+    @apply bg-background font-sans;
+  }
+  body {
+    @apply text-foreground;
   }
 }
 
@@ -162,9 +224,18 @@
     background-image: linear-gradient(135deg, #D97706, #F59E0B);
   }
 
-  /* Hero gradient - artık light/white */
+  /* Hero gradient — used by the auth pages' decorative left panel. Was
+     simplified to plain bg-white during the redesign, which broke contrast
+     on white-text labels and also looked stark in dark mode (a single
+     opaque white panel inside an otherwise-dark login card). Reverted to
+     a proper amber gradient so the panel reads as a branded hero in BOTH
+     themes — white text stays legible on the warm gradient regardless of
+     the surrounding theme. */
   .gradient-hero {
-    @apply bg-white;
+    background-image: linear-gradient(135deg, #d97706, #f59e0b 55%, #fbbf24);
+  }
+  .dark .gradient-hero {
+    background-image: linear-gradient(135deg, #92400e, #b45309 55%, #d97706);
   }
 
   /* hover-lift - sadece subtle shadow, translate yok */
@@ -205,4 +276,238 @@
 @keyframes scale-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Animated background orbs ────────────────────────────────────────
+   Three soft, blurry circles drift slowly across the viewport. Pure
+   CSS — no JS, no Canvas, no SVG. The orbs are positioned as a fixed
+   layer at z-index: -1 so they sit beneath all content. Each orb has
+   its own keyframe with different duration / delay so the motion never
+   loops in lockstep (avoids the obvious "everything bounces together"
+   look that ruins similar effects).
+
+   Sizing: 40vmax — wide enough to feel ambient, not so wide it spills
+   off-screen. They DO spill a bit past the viewport on purpose; that's
+   what makes them feel "alive". overflow: hidden on the wrapper means
+   they never trigger a horizontal scrollbar.
+
+   Performance:
+   - Only transform + opacity in keyframes → GPU-composited, no layout
+   - will-change: transform → compositor pre-allocates a layer
+   - filter: blur on the orbs themselves not the wrapper, so the body
+     repaints stay cheap
+
+   Reduced motion: keyframes are paused for users with prefers-reduced-
+   motion: reduce; the orbs stay visible (static positions) so the
+   visual texture is preserved without the wobble. */
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* NOTE: deliberately NO `contain: strict` here. Earlier iterations had it
+     for paint isolation, but Chrome on desktop appears to use `contain:
+     strict` as a hint to *skip* painting the subtree under some optimisation
+     conditions (user reported orbs were invisible during normal browsing
+     but briefly visible during full-page screenshot capture — that's the
+     compositor forcing a repaint). Removing it costs ~nothing because the
+     subtree only has 6 absolutely-positioned descendants that never reflow. */
+}
+
+/* Aurora — slow-rotating conic gradient. Sits BELOW the orbs in the
+   stack so the orbs read as bright spotlights drifting over a colour
+   field, instead of just blurry circles on flat bg. The blur is
+   intentionally massive (120px) — without it the conic bands are too
+   visible and look like a Pride-flag spinner. With it, you only see the
+   ambient colour shift as it rotates, like aurora borealis. */
+.animated-bg .aurora {
+  position: absolute;
+  inset: -25%; /* extend beyond viewport so rotation never reveals edges */
+  background: conic-gradient(
+    from 0deg,
+    var(--aurora-1),
+    var(--aurora-2),
+    var(--aurora-3),
+    var(--aurora-4),
+    var(--aurora-1)
+  );
+  /* 120px blur diffused the colour bands into a static-looking wash. At
+     70px the rotation is actually perceptible because you can see the
+     boundaries between hue bands moving. Saturation bump from 1.1 → 1.3
+     pushes the colours past "tinted white" into "clearly coloured".  */
+  filter: blur(70px) saturate(1.3);
+  opacity: var(--aurora-opacity);
+  /* 75s → 40s → 15s. User said "doesn't feel dynamic". 15s linear
+     rotation = 24°/sec, which is fast enough that you SEE the rotation
+     happening in real time, but slow enough not to be dizzy. */
+  animation: aurora-spin 15s linear infinite;
+  will-change: transform;
+}
+
+@keyframes aurora-spin {
+  to { transform: rotate(360deg); }
+}
+
+.animated-bg .orb {
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  /* 80px → 50px so the orb has a discernible edge the eye can track. The
+     gradient still fades to transparent at 65% so there's no hard outline —
+     just enough definition to recognise the orb as a moving object. */
+  filter: blur(50px);
+  mix-blend-mode: var(--orb-blend);
+  will-change: transform;
+}
+
+.animated-bg .orb-1 {
+  background: radial-gradient(circle at center, var(--orb-1), transparent 65%);
+  top: -15vmax;
+  left: -15vmax;
+  /* 18s → 12s. Combined with `linear` easing (not ease-in-out) the orb
+     doesn't sit-and-pause near keyframe positions — it drifts at a
+     constant rate the whole time, which reads as continuous motion. */
+  animation: orb-drift-1 12s linear infinite;
+}
+
+.animated-bg .orb-2 {
+  background: radial-gradient(circle at center, var(--orb-2), transparent 65%);
+  bottom: -20vmax;
+  right: -15vmax;
+  animation: orb-drift-2 14s linear infinite;
+  animation-delay: -5s;
+}
+
+.animated-bg .orb-3 {
+  background: radial-gradient(circle at center, var(--orb-3), transparent 65%);
+  top: 30%;
+  left: 40%;
+  animation: orb-drift-3 16s linear infinite;
+  animation-delay: -9s;
+}
+
+/* Subtle dot grid layered above the orbs. Adds a "tech / SaaS" texture
+   without the noise/grain effect being aggressive. Uses
+   currentColor-style transparency so dark mode automatically inverts. */
+.animated-bg .grain {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    oklch(0.15 0.02 60 / 0.04) 1px,
+    transparent 0
+  );
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+.dark .animated-bg .grain {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    oklch(0.95 0.01 85 / 0.05) 1px,
+    transparent 0
+  );
+}
+
+/* Wider translation ranges than the first pass: orbs now wander 40-50% of
+   the viewport instead of 20-25%. Combined with the 55vmax orb size and
+   18-26s loops, the user actually sees the orbs MOVE across the screen
+   instead of just shimmering in a corner. */
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(40vw, 30vh) scale(1.15); }
+  66%      { transform: translate(-10vw, 50vh) scale(0.9); }
+}
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%      { transform: translate(-35vw, -40vh) scale(1.2); }
+  70%      { transform: translate(20vw, -20vh) scale(0.85); }
+}
+@keyframes orb-drift-3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  35%      { transform: translate(-15%, -75%) scale(1.25); }
+  70%      { transform: translate(-85%, -25%) scale(0.8); }
+}
+
+/* SVG turbulence noise — top of the stack so it textures everything
+   below. The data URI is a 250x250 SVG with feTurbulence (fractalNoise,
+   baseFrequency=0.85, 2 octaves). Browsers compute the noise ONCE and
+   cache the resulting bitmap, so this has zero per-frame cost. The
+   bitmap is tiled across the viewport via background-repeat (default).
+
+   stitchTiles="stitch" → adjacent tiles match at the edges, no seams.
+   opacity 0.04-0.06 → present-but-not-distracting film-grain feel.
+   mix-blend-mode: overlay → noise reads as light/dark texture instead
+   of a flat grey layer. */
+.animated-bg .noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='250' height='250'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+}
+.dark .animated-bg .noise {
+  opacity: 0.09; /* slightly more visible on dark to compensate for low contrast on slate bg */
+}
+
+/* ─── Floating particles ─────────────────────────────────────────────
+   12 small sharp-edged dots drifting independently across the viewport.
+   The orbs/aurora give ambient colour; these give *trackable* motion
+   so users with low motion sensitivity still notice that the page is
+   alive.
+
+   Each .particle picks up per-instance custom properties set in the
+   AnimatedBackground component (see PARTICLES array). The base style
+   handles colour + the shared keyframe — only duration/delay/path/
+   alpha vary per particle. */
+.animated-bg .particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--particle-color), transparent 70%);
+  /* Inline blur prevents the dot from looking like a stamped circle —
+     it has a soft glow even at 4-9px size. Combined with the small
+     box-shadow we get a halo that makes dots stand off the page bg in
+     EITHER theme (dark dots get a brighter ring on light bg; light dots
+     get a brighter ring on dark bg via the same colour token). */
+  filter: blur(1px);
+  box-shadow: 0 0 8px 1px var(--particle-color);
+  opacity: 0;
+  animation: particle-drift var(--p-dur, 18s) ease-in-out infinite;
+  animation-delay: var(--p-delay, 0s);
+  will-change: transform, opacity;
+}
+
+@keyframes particle-drift {
+  0%, 100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  10%, 90% {
+    opacity: var(--p-alpha, 0.6);
+  }
+  50% {
+    /* Mid-cycle: particle is at its peak drift offset and slightly larger.
+       Returns to origin by 100%. */
+    opacity: var(--p-alpha, 0.6);
+    transform: translate(var(--p-dx, 30vw), var(--p-dy, -20vh)) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg .particle {
+    animation: none;
+    opacity: 0; /* hide entirely under reduced-motion — static dots are
+                   distracting without being part of a motion narrative */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg .orb,
+  .animated-bg .aurora {
+    animation: none;
+  }
 }

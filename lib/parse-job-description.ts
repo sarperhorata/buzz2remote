@@ -394,6 +394,27 @@ function parseSectionContent(body: string): string[] {
     return stripped.map((s) => s.bullet ?? s.original);
   }
 
+  // Heuristic A — many short lines, most look like list items:
+  //   When ≥ 70% of lines pass `looksLikeBullet` AND we have at least 3
+  //   lines, render them all as bullets. This catches scraped HTML where
+  //   the source had <li> items but lost the glyphs.
+  if (rawLines.length >= 3) {
+    const bulletyLines = rawLines.filter(looksLikeBullet).length;
+    if (bulletyLines / rawLines.length >= 0.7) {
+      return rawLines;
+    }
+  }
+
+  // (Removed the previous "Heuristic B" — capital-letter-boundary splitter
+  // for single-line flattened lists. It split *every* lowercase→Capital
+  // transition, which made phrases like "Strong Practical Experience" into
+  // three separate bullets ["Strong", "Practical", "Experience"], and broke
+  // legitimate sentences like "Our platform integrates with Microsoft 365,
+  // Google Workspace, Slack…" into nonsense fragments. Net negative — the
+  // wall-of-text it was trying to fix is less bad than the over-split
+  // word-salad it produced. Single-paragraph rendering for source data
+  // that's already pre-flattened is an acceptable degradation.)
+
   // Otherwise: paragraphs. Reassemble by merging lines that don't end in
   // sentence punctuation (handles wrapped text).
   const paragraphs: string[] = [];

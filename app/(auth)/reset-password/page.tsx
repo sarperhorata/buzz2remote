@@ -156,8 +156,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-border shadow-sm p-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+      <div className="w-full max-w-md bg-card rounded-2xl border border-border shadow-sm p-8">
         <div className="flex justify-center mb-6">
           <Link href="/" className="flex items-center gap-2 group">
             <BeeIcon size={36} className="group-hover:scale-110 transition-transform" />

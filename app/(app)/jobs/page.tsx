@@ -49,7 +49,7 @@ function MatchScoreBadge({ score }: { score: number | null | undefined }) {
       className="relative w-[52px] h-[52px] rounded-full shrink-0 flex items-center justify-center"
       style={{ background: bg }}
     >
-      <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center">
+      <div className="absolute inset-[3px] rounded-full bg-card flex items-center justify-center">
         <span className={`text-sm font-semibold ${text}`}>{score}</span>
       </div>
     </div>
@@ -149,7 +149,7 @@ function MultiSelectDropdown({
         </svg>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-52 bg-white border border-border rounded-xl shadow-lg py-1">
+        <div className="absolute z-50 mt-1 w-52 bg-card border border-border rounded-xl shadow-lg py-1">
           {options.map((opt) => (
             <label
               key={opt}
@@ -275,7 +275,7 @@ function SalaryRangeSlider({
         </svg>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-72 bg-white border border-border rounded-xl shadow-lg p-4">
+        <div className="absolute z-50 mt-1 w-72 bg-card border border-border rounded-xl shadow-lg p-4">
           <div className="flex justify-between text-xs text-muted-foreground mb-2">
             <span>{formatSalaryLabel(minVal, maxVal)}</span>
             {isActive && (
@@ -291,12 +291,12 @@ function SalaryRangeSlider({
               style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-amber-500 shadow cursor-pointer hover:scale-110 transition-transform"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-card border-2 border-amber-500 shadow cursor-pointer hover:scale-110 transition-transform"
               style={{ left: `${minPct}%` }}
               onMouseDown={handleMouseDown("min")}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-amber-500 shadow cursor-pointer hover:scale-110 transition-transform"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-card border-2 border-amber-500 shadow cursor-pointer hover:scale-110 transition-transform"
               style={{ left: `${maxPct}%` }}
               onMouseDown={handleMouseDown("max")}
             />
@@ -629,14 +629,14 @@ function JobsPageInner() {
           placeholder="Job title, company, or keyword..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="flex-1 px-4 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+          className="flex-1 px-4 py-2.5 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
         />
         <input
           type="text"
           placeholder="Location..."
           value={location}
           onChange={(e) => { setLocation(e.target.value); setPage(1); }}
-          className="sm:w-44 px-4 py-2.5 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+          className="sm:w-44 px-4 py-2.5 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
         />
       </div>
 
@@ -692,7 +692,7 @@ function JobsPageInner() {
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-white border border-border rounded-xl p-5 animate-pulse">
+            <div key={i} className="bg-card border border-border rounded-xl p-5 animate-pulse">
               <div className="h-4 bg-muted rounded w-1/2 mb-2" />
               <div className="h-3 bg-muted rounded w-1/4 mb-3" />
               <div className="h-3 bg-muted rounded w-3/4" />
@@ -718,7 +718,7 @@ function JobsPageInner() {
               return (
                 <div
                   key={job.id}
-                  className="relative bg-white border border-border rounded-xl p-5 hover:shadow-md hover:border-amber-200 transition-all"
+                  className="relative bg-card border border-border rounded-xl p-5 hover:shadow-md hover:border-amber-200 transition-all"
                 >
                   <div className="flex items-start gap-4">
                     {/* Match score (left) */}
@@ -784,7 +784,7 @@ function JobsPageInner() {
                           className={`w-9 h-9 rounded-full border flex items-center justify-center transition ${
                             isLiked
                               ? "bg-amber-500 border-amber-500 text-white"
-                              : "border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 bg-white"
+                              : "border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 bg-card"
                           }`}
                         >
                           <ThumbsUp className="w-4 h-4" />
@@ -798,7 +798,7 @@ function JobsPageInner() {
                           }}
                           aria-label="Dismiss job"
                           title="Not interested"
-                          className="w-9 h-9 rounded-full border border-border text-muted-foreground hover:text-destructive hover:border-red-300 bg-white flex items-center justify-center transition"
+                          className="w-9 h-9 rounded-full border border-border text-muted-foreground hover:text-destructive hover:border-red-300 bg-card flex items-center justify-center transition"
                         >
                           <X className="w-4 h-4" />
                         </button>

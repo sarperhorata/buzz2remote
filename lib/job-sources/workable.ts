@@ -1,11 +1,12 @@
 import { JobSource, RawJob } from "./types";
 
-// 21 companies using Workable ATS (from distill export)
+// 23 companies using Workable ATS (distill + embedded-ATS detection — see
+// scripts/pilot-detect-embedded-ats.ts).
 const WORKABLE_COMPANIES = [
-  "elo","drops","brandbastion","goosechase","baremetrics",
-  "io-global","defiant","screenly","cartstack","7pace",
-  "glofoxinc","memory","gitbook","student-loan-hero",
-  "bluecode","themeisle","seeq","wingieenuygun","hospitable",
+  "7pace","baremetrics","bluecode","brandbastion","brightrockgames",
+  "cartstack","defiant","drops","elo","gitbook","glofoxinc","goosechase",
+  "hospitable","humanmade","io-global","memory","pitch-software","screenly",
+  "seeq","student-loan-hero","themeisle","whitespectre","wingieenuygun",
 ];
 
 async function fetchWorkableJobs(company: string): Promise<RawJob[]> {

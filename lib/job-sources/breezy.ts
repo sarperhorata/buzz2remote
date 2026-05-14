@@ -1,13 +1,14 @@
 import { JobSource, RawJob } from "./types";
 
-// 23 companies using Breezy HR (from distill export)
+// 25 companies using Breezy HR (distill + embedded-ATS detection — see
+// scripts/pilot-detect-embedded-ats.ts).
 const BREEZY_COMPANIES = [
-  "padi","dotsub","parashift-ag","connected-women","codigovision",
-  "participatory-culture-foundation","dollar-flight-club","cvedia",
-  "the-engine-room","sciencebuzz","freedom-insurance-services",
-  "time-doctor","ivisa","remote-year","social-discovery-ventures",
-  "ta-monroe","sortly-inc","bondex-app","teammelon","bad-marketing",
-  "gamurs","beter",
+  "bad-marketing","beter","bondex-app","codigovision","connected-women",
+  "cvedia","deca-games","dollar-flight-club","dotsub","freedom-insurance-services",
+  "gamurs","ivisa","jatheon-technologies-inc","larvol","padi","parashift-ag",
+  "participatory-culture-foundation","remote-year","sciencebuzz",
+  "social-discovery-ventures","sortly-inc","ta-monroe","teammelon",
+  "the-engine-room","time-doctor",
 ];
 
 async function fetchBreezyJobs(company: string): Promise<RawJob[]> {
