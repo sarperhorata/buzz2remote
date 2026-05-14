@@ -91,7 +91,7 @@ export default function Home() {
   const statsLoading = data === null;
 
   return (
-    <div className="bg-background">
+    <div>
       {/* Hero Section */}
       <section className="pt-20 pb-16 md:pt-28 md:pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
