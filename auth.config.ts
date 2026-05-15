@@ -16,6 +16,11 @@ export const authConfig = {
     signIn: "/login",
     error: "/login",
   },
+  // Trust the deployment host. Without this, edge middleware running on
+  // Vercel preview deploys can reject session cookies because it sees a host
+  // that doesn't match NEXTAUTH_URL/AUTH_URL. Vercel rewrites the Host header
+  // through its own infrastructure, so this is safe here.
+  trustHost: true,
   providers: [],
   callbacks: {
     // We still need a JWT callback so the cookie carries `userId`,

@@ -3,7 +3,9 @@
 import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { LoginToastWatcher } from "@/components/LoginToastWatcher";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -42,6 +44,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
         >
           {children}
+          <Toaster richColors position="top-right" />
+          {/*
+            LoginToastWatcher reads ?welcome=1 / ?error=… params set by the
+            NextAuth OAuth callback so we can surface a success or failure
+            toast. Wrapped in Suspense because useSearchParams() requires a
+            boundary in Next.js 16 App Router.
+          */}
+          <Suspense fallback={null}>
+            <LoginToastWatcher />
+          </Suspense>
         </ThemeProvider>
       </QueryClientProvider>
     </SessionProvider>

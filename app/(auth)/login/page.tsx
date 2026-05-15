@@ -20,7 +20,13 @@ function LoginForm() {
   const [hasGoogle, setHasGoogle] = useState(false);
   const [hasLinkedIn, setHasLinkedIn] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  // Append ?welcome=1 so the LoginToastWatcher mounted in Providers fires a
+  // "Login successful" toast on the destination page after OAuth completes.
+  // Preserve any existing query string on the callback target.
+  const callbackUrl = rawCallbackUrl.includes("?")
+    ? `${rawCallbackUrl}&welcome=1`
+    : `${rawCallbackUrl}?welcome=1`;
 
   // Check which OAuth providers are actually configured. If GOOGLE_CLIENT_ID
   // or LINKEDIN_CLIENT_ID env vars are missing, lib/auth.ts skips registering
@@ -49,6 +55,8 @@ function LoginForm() {
       setError("Invalid email or password");
       setLoading(false);
     } else {
+      // Use the welcome-suffixed callbackUrl so credentials-flow logins also
+      // trigger the success toast.
       window.location.href = callbackUrl;
     }
   }
