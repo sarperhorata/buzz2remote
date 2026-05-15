@@ -70,16 +70,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
     error: "/login",
   },
+  // Trust the deployment host even when NEXTAUTH_URL/AUTH_URL is unset or
+  // doesn't match. Without this, NextAuth refuses to issue OAuth redirects on
+  // Vercel preview deploys and falls back to a misconfigured base URL. Safe to
+  // enable on Vercel because the platform itself rewrites the Host header.
+  trustHost: true,
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google" || account?.provider === "linkedin") {
-        if (!user.email) return false;
+        // Diagnostic: log what the OAuth provider actually returned so we can
+        // see exactly which email is being used for the DB lookup. Remove this
+        // log once LinkedIn / Google flows are stable in production.
+        console.log(`[auth][signIn] provider=${account.provider} email=${user.email ?? "(none)"} sub=${account.providerAccountId} profile_email=${(profile as { email?: string } | undefined)?.email ?? "(none)"}`);
+
+        if (!user.email) {
+          console.error(`[auth][signIn] BLOCKED — no email returned from ${account.provider}. profile=${JSON.stringify(profile)}`);
+          return false;
+        }
 
         const existingUser = await prisma.users.findUnique({
           where: { email: user.email },
         });
 
         if (existingUser) {
+          console.log(`[auth][signIn] linking ${account.provider} to existing user ${existingUser.id} (email=${existingUser.email})`);
           // Link OAuth account to existing user
           const updateData: Record<string, string | null> = {
             auth_provider: account.provider,
@@ -98,6 +112,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             data: updateData,
           });
         } else {
+          console.log(`[auth][signIn] creating new user for ${account.provider} email=${user.email}`);
           // Create new user from OAuth
           await prisma.users.create({
             data: {
