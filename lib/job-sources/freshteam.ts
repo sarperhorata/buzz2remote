@@ -1,16 +1,23 @@
 import { JobSource, RawJob } from "./types";
 
-// 30 companies using Freshteam (from distill export).
+// 63 companies using Freshteam (existing 30 + 33 discovered via scripts/discover-ats-slugs.ts).
 // Note: Freshteam's JSON API now requires authentication (returns 401/403),
 // so we scrape the public HTML jobs page instead. Each listing renders as
 // <a href="/jobs/<id>/<slug>">…title + snippet…</a>.
 const FRESHTEAM_COMPANIES = [
-  "shuggr","easocare","under25-talent","aavalabs","sheleadsafrica-talent",
-  "ultius","lastcallmedia","oml","egannelson","lyfserv",
-  "getthru","trendspider","webservicesdesk","construelabs","blanklabel",
-  "trovatrip-talent","exchangevalet","ryustaffingservices","innoviavc",
-  "jensdev","teetra","flosstech","venubi","closedwon",
-  "mhubenterprise","crispyapps","truewhitespace","optimization","tezerak","nil",
+  "7peakssoftware-hr","aavalabs","acresoftware-1629290987543","antino","blanklabel",
+  "bridgeintel","bungeetech-talent","closedwon","codingal","conferecartoes-team",
+  "construelabs","crispyapps","dhan","easocare","egannelson",
+  "eplane-team","exchangevalet","flosstech","getflowpath","getstimulus-talent",
+  "getthru","haptik","honest","innoviavc","jensdev",
+  "jolera","lastcallmedia","leaningtech","leapfinance","lendsqr",
+  "locus","lyfserv","mhubenterprise","mudrex","nil",
+  "oml","optimization","pandora-people","paxcom","pesapal",
+  "platformatory-1632407309031","ryustaffingservices","sayint","sciera","sedintechnologies-talent",
+  "sheleadsafrica-talent","shuggr","smallcase","sonicelectronix-talent","superlayer-1634135852323",
+  "talent360","teetra","tezerak","thesoftwarepractice","trendspider",
+  "trovatrip-talent","truewhitespace","ukirama","ultius","under25-talent",
+  "univers","venubi","webservicesdesk",
 ];
 
 // Freshteam renders each job as:

@@ -1,14 +1,23 @@
 import { JobSource, RawJob } from "./types";
 
-// 25 companies using Breezy HR (distill + embedded-ATS detection — see
-// scripts/pilot-detect-embedded-ats.ts).
+// 67 companies using Breezy HR. Sources:
+//   - distill + embedded-ATS detection (scripts/pilot-detect-embedded-ats.ts) — initial 25
+//   - awesome-list + GitHub code search (scripts/discover-ats-slugs.ts) — +42 new slugs
 const BREEZY_COMPANIES = [
-  "bad-marketing","beter","bondex-app","codigovision","connected-women",
-  "cvedia","deca-games","dollar-flight-club","dotsub","freedom-insurance-services",
-  "gamurs","ivisa","jatheon-technologies-inc","larvol","padi","parashift-ag",
-  "participatory-culture-foundation","remote-year","sciencebuzz",
-  "social-discovery-ventures","sortly-inc","ta-monroe","teammelon",
-  "the-engine-room","time-doctor",
+  "1tap-by-receipt-bank","acled","antithesis","artefactual-systems","avantos",
+  "bad-marketing","beatdapp","beter","binary-star","boldare",
+  "bondex-app","canoo","caribou","chatie","city-report-inc",
+  "codigovision","combient","connected-women","connexa","cove",
+  "cvedia","data-world","datadems","deca-games","degate",
+  "dex-labs","dollar-flight-club","dotsub","ecostage","fr8-revolution",
+  "freedom-insurance-services","gaggle","gamurs","instana","ivisa",
+  "jatheon-technologies-inc","labcodes-software-studio","larvol","llamaindex","mylo",
+  "naturemetrics","netsync-network-solutions","pactsafe-inc","padi","pagely",
+  "parashift-ag","participatory-culture-foundation","paystack","quansight","rabbitmart",
+  "remote-year","sciencebuzz","setter","shiphero","skillcrush",
+  "social-discovery-ventures","sortly-inc","spruce-systems","sumeru-equity-partners","ta-monroe",
+  "teammelon","telespazio-be","textile","the-engine-room","the-looma-project",
+  "time-doctor","vigilant",
 ];
 
 async function fetchBreezyJobs(company: string): Promise<RawJob[]> {

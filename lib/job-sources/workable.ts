@@ -1,12 +1,20 @@
 import { JobSource, RawJob } from "./types";
 
-// 23 companies using Workable ATS (distill + embedded-ATS detection — see
-// scripts/pilot-detect-embedded-ats.ts).
+// 55 companies using Workable ATS. Sources:
+//   - distill + embedded-ATS detection (scripts/pilot-detect-embedded-ats.ts) — initial 23
+//   - awesome-list + GitHub code search (scripts/discover-ats-slugs.ts) — +32 new slugs
 const WORKABLE_COMPANIES = [
-  "7pace","baremetrics","bluecode","brandbastion","brightrockgames",
-  "cartstack","defiant","drops","elo","gitbook","glofoxinc","goosechase",
-  "hospitable","humanmade","io-global","memory","pitch-software","screenly",
-  "seeq","student-loan-hero","themeisle","whitespectre","wingieenuygun",
+  "7pace","baremetrics","bayutdubizzle","bluecode","booksy-1",
+  "brandbastion","brightrockgames","cartstack","castle-park-investments-llc","defiant",
+  "devsquad","drops","elementio","elo","empatica",
+  "exoticca","facetwealth","futureplc","genetec-inc","gitbook",
+  "glofoxinc","goosechase","hospitable","huggingface","humanmade",
+  "idoven","imachines","io-global","justpark","kahoot",
+  "kantox","languagewire","lunit","mediavine","memory",
+  "mixcloud-limited","orion-health","pathwaycom","pitch-software","remotebase",
+  "responsiveads-inc","screenly","seeq","sigmadefense","smartnews",
+  "storyteq","student-loan-hero","studiogobo","tetrascience","the-metaplex-foundation",
+  "themeisle","treatwell","valsoft-corp","whitespectre","wingieenuygun",
 ];
 
 async function fetchWorkableJobs(company: string): Promise<RawJob[]> {

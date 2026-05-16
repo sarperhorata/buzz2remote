@@ -1,14 +1,58 @@
 import { JobSource, RawJob } from "./types";
 
-// 29 companies using Ashby ATS (distill + embedded-ATS detection from direct
-// career pages — see scripts/pilot-detect-embedded-ats.ts).
+// 232 companies using Ashby ATS. Sources:
+//   - distill + embedded-ATS detection (scripts/pilot-detect-embedded-ats.ts) — initial 29
+//   - remoteintech/remote-jobs + GitHub code search
+//     (scripts/discover-ats-slugs.ts) — +203 new slugs. Ashby is dominant in
+//     the AI/SaaS startup space (OpenAI, ElevenLabs, Vanta, Whatnot, etc.).
 const ASHBY_COMPANIES = [
-  "acorns","astronomer","blacksmith","buffer","cargo-one",
-  "chainlink-labs","chilipiper","close","deel","dourolabs",
-  "eightsleep","ens-labs","goteleport","gruntwork","helpscout",
-  "keyrock","li.fi","linear","nethermind","nextmatter",
-  "oplabs","outliant","percona","pleo","signalfire",
-  "smallpdf","stedi","talentdisruptors","workos",
+  "1password","abridge","acorns","airgarage","airgoods",
+  "alan","alembic","allium","ameba","andela",
+  "anima","ankorstore","ashby","ashby-embed-demo-org","assembledhq",
+  "astera","astronomer","atomic-financial","atomicsemi","aurorasolar",
+  "benepass","betterup","bevel","bitnomial","blacksmith",
+  "blockworks","blueberrypediatrics","brainly","buffer","buildwithfern",
+  "cambly","candidhealth","cantina","capchase","cargado",
+  "cargo-one","category-labs","chaidiscovery","chainlink-labs","charge-robotics",
+  "checkly","chestnut","chilipiper","claylabs","cleric",
+  "close","cloudtrucks","cohere","comity","company",
+  "conduit","continue","crusoe","cruxclimate","cursor",
+  "d-matrix","dailypay","dandy","datologyai","dave",
+  "deel","deepl","dialogueai","distyl","docker",
+  "dourolabs","duck-duck-go","edlink","eightsleep","elevenlabs",
+  "elicit","eliseai","elliptic","ema","ens-labs",
+  "etched","extend","fathom","feldera","firecrawl",
+  "fizz","fluidstack","frontcareers","genmo","gigaml",
+  "glimpse","gorgias","goteleport","gptzero","graphite",
+  "gruntwork","hadrian-automation","handshake","harmonic","harvey",
+  "helpscout","higgsfieldai","hims-and-hers","hiya","homevision",
+  "hopper","humaans","imprint","instructure","ironcladhq",
+  "joor","keyrock","kindred","kombo","konvu",
+  "langfuse","li.fi","lightdash","linear","liquid",
+  "livekit","llamaindex","luxor","magical","mapbox",
+  "matterworks","mazedesign","mechanize","medal","meridianlink",
+  "middesk","mirage","modal","monterra","mural",
+  "mux","mystenlabs","n8n","nango","netboxlabs",
+  "netgear","nethermind","nextmatter","nomic","northslope-technologies",
+  "notable","notion","nuna","odyssey","onecrew",
+  "onoshealth","ontic","openai","openrouter","oplabs",
+  "opusclip","oscilar","outliant","oyster","parallel",
+  "parker","patreon","peec","percona","permitflow",
+  "perplexity","persona","pleo","polygon-labs","polymarket",
+  "prefect","primer","prior-labs","procurify","propelus",
+  "pylon","pylon-labs","quora","railway","ramp",
+  "readme","reflectionai","render","replit","revenuecat",
+  "rillet","rula","sahara","salesjack","saronic",
+  "savvy","scholarly","scribdinc","sentient","serval",
+  "sesame","sierra","siftstack","signalfire","signoz",
+  "sigp","sleeper","smallpdf","sobek-ai","solace",
+  "solink","stedi","stellar","stickermule","strava",
+  "stream","stytch","substack","suno","supabase",
+  "tabs","talentdisruptors","talos-trading","tavahealth","tracer",
+  "tribe-xyz","truelogic","trychroma","unto-labs","upside",
+  "valon","vanta","virtahealth","voladynamics","voldex",
+  "watershed","whatnot","wirescreen","workos","zapier",
+  "zencastr","zippymh",
 ];
 
 async function fetchAshbyJobs(company: string): Promise<RawJob[]> {
