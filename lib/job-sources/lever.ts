@@ -1,19 +1,32 @@
 import { JobSource, RawJob } from "./types";
 
-// 69 remote-first companies using Lever ATS (distill + embedded-ATS detection
-// from direct career pages — see scripts/pilot-detect-embedded-ats.ts).
+// 102 companies using Lever ATS. Sources:
+//   - distill + embedded-ATS detection on direct career pages
+//     (scripts/pilot-detect-embedded-ats.ts) — initial 69
+//   - remoteintech/remote-jobs + GitHub code search
+//     (scripts/discover-ats-slugs.ts) — +33 new slugs
 const LEVER_COMPANIES = [
-  "15five","airalo","airtable","anduril","anthropic","appen-2","aurora-dev",
-  "bigtime","binance","blum","calendly","circonus","clerky","clickup",
-  "cockroachlabs","codecombat","colibrigroup","collabora","confluent",
-  "databricks","dnc","elevatelabs","espresso","fireflyon","formulamonks",
-  "gate.io","girlswhocode","gong-io","heetch","huggingface","innocraft",
-  "jumpcloud","kong","kraken","kungfu","lacework","lendbuzz","loom","miro",
-  "netflix","offchainlabs","olo","openai","palantir","peerspace","picus",
-  "rainforest","rarible","replit","retool","rippling","roofstacks",
-  "sanabenefits","scale","seedify-fund","seerinteractive","shopify",
-  "skillshare","sonatype","spotify","strapi","superside","threecolts",
-  "timescale","tokenmetrics","vrchat","webflow","welocalize","wiz-inc",
+  "15five","achievers","aerostrat","airalo","airtable",
+  "anduril","anomali","ansatzcapital","anthropic","appen-2",
+  "aurora-dev","bhvr","bigtime","binance","bluecatnetworks",
+  "blum","calendly","caremessage","caseware","certik",
+  "circonus","clerky","clickup","cockroachlabs","codecombat",
+  "colibrigroup","collabora","confluent","contentsquare","databricks",
+  "deepgenomics","dnc","elevatelabs","envato-2","espresso",
+  "extremenetworks","findem","fireflyon","formulamonks","gate.io",
+  "geocomply-2","girlswhocode","globalstrategygroup","gong-io","heetch",
+  "hermeus","huggingface","innocraft","jito","jumpcloud",
+  "kong","kraken","kungfu","lacework","lendbuzz",
+  "loadsmart","logrocket","loom","magnetforensics","marcopolo",
+  "miro","myollie","netflix","offchainlabs","olo",
+  "openai","palantir","peerspace","perforce","picus",
+  "prominentedge","rainforest","rarible","replit","retool",
+  "rippling","roofstacks","sanabenefits","scale","seedify-fund",
+  "seerinteractive","shopify","skillshare","sonatype","spotify",
+  "spreedly","strapi","super-com","superside","teamsnap",
+  "telesat","thinkingbox","threecolts","timescale","tinybird",
+  "tokenmetrics","unify","valkyrietrading","vrchat","webflow",
+  "welocalize","wiz-inc",
 ];
 
 async function fetchLeverJobs(company: string): Promise<RawJob[]> {

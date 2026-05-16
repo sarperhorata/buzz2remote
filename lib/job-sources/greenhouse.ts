@@ -1,22 +1,49 @@
 import { JobSource, RawJob } from "./types";
 
-// 72 remote-first companies using Greenhouse ATS (merged from distill export +
-// curated list + embedded-ATS auto-detection from direct career pages, see
-// scripts/pilot-detect-embedded-ats.ts). Many sites that look like custom
-// HTML career pages actually iframe Greenhouse under the hood — sweeping
-// 297 "direct" pages turned up 14 new Greenhouse slugs.
+// 182 companies using Greenhouse ATS. Sources merged together:
+//   - distill catalogue + curated list (initial 72)
+//   - embedded-ATS sweep on 297 direct career pages (scripts/pilot-detect-embedded-ats.ts)
+//   - remoteintech/remote-jobs awesome-list + GitHub code search
+//     (scripts/discover-ats-slugs.ts) → +110 new slugs
+// Many "direct" career pages turn out to be Greenhouse iframes under the hood.
 const GREENHOUSE_COMPANIES = [
-  "ahrefsjobs","airbnb","atomicvest","auth0","automattic","axios","bevy",
-  "beyondfinance","boulevard","brex","bugcrowd","cameo","canonical","cloudflare",
-  "coinbase","convertkit","datadog","dbt-labs","deel","deliveryassociates",
-  "disco","discord","downingcapitalgroup","duolingo","eclinicalsolutions",
-  "elastic","exodus54","figma","figure","fulfil","garnerhealth","generalassembly",
-  "gitlab","givedirectly","grafana-labs","grafanalabs","gusto","hashicorp",
-  "inchargeenergy","instacart","invisibletech","linear","mercury","mongodb",
-  "nationbuilder","netlify","notion","pandadoc","pitch","plaid","productpeople",
-  "ramp","recharge","reddit","remotecom","revenuecat","roadie","securityscorecard",
-  "snyk","sourcegraph91","stripe","supabase","thesis","twilio","userinterviews",
-  "vercel","wikimedia","woo","wyndlabs","xapo61","zapier",
+  "ada18","aestudio","affirm","ahrefsjobs","airbnb",
+  "anthropic","appian","appliedintuition","applovin","aquaticcapitalmanagement",
+  "arcadiacareers","ardentmc","arizeai","atomicvest","auth0",
+  "automattic","axios","azragames","b12","banyansoftware",
+  "bevy","beyond","beyondfinance","billcom","bitgo",
+  "blastpoint","bosapropertiesinc","boulevard","brex","bridgewater89",
+  "bugcrowd","bungie","buzzfeed","cameo","canonical",
+  "cartesiansystems","circleci","civicactions","cleo","cloudflare",
+  "coinbase","consensys","contentful","convertkit","cresta",
+  "customerio","databricks","datadog","dbt-labs","dbtlabsinc",
+  "deel","deliveryassociates","dept","dialpad","diligentcorporation",
+  "disco","discord","doubleverify","downingcapitalgroup","drweng",
+  "dunnhumby","duolingo","eclinicalsolutions","elastic","emarketer",
+  "exodus54","figma","figure","figureai","fiveringsllc",
+  "flagshippioneeringinc","flexport","fulfil","garnerhealth","generalassembly",
+  "genevatrading","geotab","gitlab","givedirectly","grafana-labs",
+  "grafanalabs","guardsquare","gusto","hashicorp","headway",
+  "inchargeenergy","instacart","intercom","invisibletech","khanacademy",
+  "kivaorg","konradgroup","leagueinc","linear","mediabrands",
+  "mercury","mochihealth","modernhealth","mongodb","monzo",
+  "motional","mwinternshipprogram","nationalpublicradioinc","nationbuilder","nearform",
+  "netlify","notion","pagerduty","pandadoc","pathward",
+  "paypay","pilothq","pitch","pitchbookdata","plaid",
+  "point72","productpeople","prove","radixuniversity","raft",
+  "ramp","recharge","reddit","remotecom","revenuecat",
+  "roadie","robinhood","rocketlab","sagent","samsungresearchamericainternship",
+  "scout24","securityscorecard","seesaw","sezzle","shakepay",
+  "singlestore","skhynixmemorysolutionsamericainc","smartling","snyk","sourcegraph91",
+  "spacex","speechify","stackblitz","stone","stripe",
+  "suki","supabase","synthesishealth","systemstechnologyresearch","temporaltechnologies",
+  "teravision","thealleninstitute","thenewyorktimes","thesis","tide",
+  "togetherwork","transmarketgroup","tudorgroup","twilio","udacity",
+  "upgrade","userinterviews","vardaspace","vercel","verkada",
+  "verramobility","virtu","visiersolutionsinc","voxmedia","wargamingen",
+  "warp","wehrtyou","wikimedia","woo","wooga",
+  "wpp","wyndlabs","xai","xapo61","zapier",
+  "zupinnovation","zyngacareers",
 ];
 
 async function fetchGreenhouseJobs(company: string): Promise<RawJob[]> {

@@ -1,9 +1,14 @@
 import { JobSource, RawJob } from "./types";
 
-// 5 companies using Recruitee (distill + embedded-ATS detection — see
-// scripts/pilot-detect-embedded-ats.ts).
+// 23 companies using Recruitee. Sources:
+//   - distill + embedded-ATS detection (scripts/pilot-detect-embedded-ats.ts) — initial 5
+//   - awesome-list + GitHub code search (scripts/discover-ats-slugs.ts) — +18 new slugs
 const RECRUITEE_COMPANIES = [
-  "bigcartel","cobbleweb","scholarshipowl","supersummary","tether",
+  "bigcartel","bitfinex","claranetitalia","cobbleweb","comnovogmbh",
+  "company","crazygames","giveth","greatminds","holded",
+  "huaweicanada","intent","kodify","madewithlove","mimo",
+  "navinfoeurope","rebelmouse","scholarshipowl","sequra","supersummary",
+  "tether","timedoctor","upside",
 ];
 
 async function fetchRecruiteeJobs(company: string): Promise<RawJob[]> {

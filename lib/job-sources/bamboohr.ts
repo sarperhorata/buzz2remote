@@ -22,8 +22,17 @@ import { JobSource, RawJob } from "./types";
  * leave description blank; users click through to the BambooHR page.
  */
 const BAMBOOHR_COMPANIES: Array<string> = [
-  "prodigyfinance", "sestek", "simetrik", "fourkitchens",
-  "bookingsync", "uscreen",
+  "answerlab","aras","arenko","batimoinc","beqom",
+  "berkshiregrey","bgcengineering","blackstoneenergy","bookingsync","button",
+  "carepros","cobaltai","compulsiongames","condoauthorityontario","cpjorg",
+  "cybermsi","denizen","environicsanalytics","fellowapp","forcemanager",
+  "fortmckay","fourkitchens","frontieraerospaceaccount","fullbay","ghy",
+  "giatecscientific","gvf","headway","icsiberkeley","instabug",
+  "internetsociety","ipsgroupinc","jobandtalent","orases","palantir",
+  "people","phantomspace","prezi","prodigyfinance","researchsol",
+  "revolgy","safransed","satellogic","sestek","simetrik",
+  "tnr","uneekor","unicorne","uscreen","viotas",
+  "vizzuality","whitman","wsd","yabupushelberg","zenlayer",
 ];
 
 interface BambooHRJob {
